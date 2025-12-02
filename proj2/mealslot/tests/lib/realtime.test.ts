@@ -1,4 +1,3 @@
-// tests/lib/realtime.test.ts
 import { describe, it, expect, vi, afterEach, beforeEach } from "vitest";
 
 class MockBroadcastChannel {
@@ -45,7 +44,9 @@ class MockWebSocket {
 
     // simulate async open
     setTimeout(() => {
-      this.onopen && this.onopen();
+      if (this.onopen) {
+        this.onopen();
+      }
     }, 0);
   }
 
@@ -57,6 +58,7 @@ class MockWebSocket {
     // nothing needed for test
   }
 }
+
 
 beforeEach(() => {
   vi.resetModules();
