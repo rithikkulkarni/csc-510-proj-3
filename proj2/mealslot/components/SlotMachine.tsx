@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react"
+import React from "react";
 import { useEffect, useMemo, useState } from "react";
 import SlotReel from "./SlotReel";
 import { Dish } from "@/lib/schemas";
@@ -15,7 +15,13 @@ type Props = {
   selection?: Dish[];
 };
 
-export function SlotMachine({ reelCount, onSpin, cooldownMs, busy, selection }: Props) {
+export function SlotMachine({
+  reelCount,
+  onSpin,
+  cooldownMs,
+  busy,
+  selection,
+}: Props) {
   const [locked, setLocked] = useState<Record<number, string>>({});
 
   useEffect(() => {
@@ -27,7 +33,7 @@ export function SlotMachine({ reelCount, onSpin, cooldownMs, busy, selection }: 
       Object.entries(locked)
         .filter(([, id]) => !!id)
         .map(([i, id]) => ({ index: Number(i), dishId: id })),
-    [locked]
+    [locked],
   );
 
   const dishesByIndex: (Dish | undefined)[] = useMemo(() => {
@@ -47,6 +53,7 @@ export function SlotMachine({ reelCount, onSpin, cooldownMs, busy, selection }: 
       }
     });
     setLocked(next);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selection && selection.map((d) => d.id).join("|")]);
 
   const toggleLock = (i: number) => {
@@ -62,14 +69,30 @@ export function SlotMachine({ reelCount, onSpin, cooldownMs, busy, selection }: 
 
   const canSpin = !busy && cooldownMs <= 0 && reelCount > 0;
 
+  const spinButtonBase =
+    "inline-flex items-center justify-center rounded-full border px-5 py-2 text-sm font-medium transform transition-all duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-50";
+
   return (
-    <section className="rounded-2xl border bg-white p-4 shadow-sm">
-      <div className="mb-3 flex items-center justify-between">
-        <h2 className="text-lg font-semibold">Slot Machine</h2>
-        <div className="text-xs text-neutral-600" aria-live="polite">
-          {cooldownMs > 0 ? `Cooldown: ${(Math.max(0, cooldownMs) / 1000).toFixed(1)}s` : "\u00A0"}
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <h2 className="text-base md:text-lg font-semibold text-neutral-900">
+          Slot Machine
+        </h2>
+        <div
+          className={cn(
+            "rounded-full px-3 py-1 text-[11px] font-medium",
+            cooldownMs > 0
+              ? "bg-orange-50 text-orange-700"
+              : "text-neutral-400",
+          )}
+          aria-live="polite"
+        >
+          {cooldownMs > 0
+            ? `Cooldown: ${(Math.max(0, cooldownMs) / 1000).toFixed(1)}s`
+            : "Ready to spin"}
         </div>
       </div>
+
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {Array.from({ length: reelCount }, (_, i) => (
           <SlotReel
@@ -81,19 +104,21 @@ export function SlotMachine({ reelCount, onSpin, cooldownMs, busy, selection }: 
         ))}
       </div>
 
-      <div className="mt-4">
+      <div className="pt-1">
         <button
           className={cn(
-            "rounded-md border px-4 py-2 text-sm font-medium",
-            canSpin ? "bg-neutral-900 text-white" : "bg-neutral-200 text-neutral-500"
+            spinButtonBase,
+            canSpin
+              ? "border-transparent bg-gradient-to-r from-orange-500 to-rose-500 text-white shadow-sm hover:-translate-y-0.5 hover:scale-[1.05] hover:shadow-md active:scale-[0.97]"
+              : "cursor-not-allowed border-neutral-200 bg-neutral-100 text-neutral-400",
           )}
           onClick={() => onSpin(lockedArray)}
           disabled={!canSpin}
           aria-disabled={!canSpin}
         >
-          Spin
+          {canSpin ? "✨ Spin" : "Spin"}
         </button>
       </div>
-    </section>
+    </div>
   );
 }
