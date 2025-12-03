@@ -2,7 +2,7 @@
   "name": "mealslot",
   "version": "0.1.0",
   "private": true,
-  "packageManager": "pnpm@9.11.0",
+  "packageManager": "pnpm@10.24.0",
   "scripts": {
     "dev": "prisma generate && next dev --port 3000",
     "build": "prisma generate && next build",
@@ -32,7 +32,7 @@
     "@heroicons/react": "^2.2.0",
     "@neondatabase/serverless": "^1.0.2",
     "@prisma/client": "5.20.0",
-    "@stackframe/stack": "^2.8.52",
+    "@stackframe/stack": "^2.8.54",
     "autoprefixer": "10.4.20",
     "bcryptjs": "2.4.3",
     "clsx": "2.1.1",
