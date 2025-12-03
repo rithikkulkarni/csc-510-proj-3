@@ -24,7 +24,10 @@ export default function PlacesMapCard({ height = 260 }: { height?: number }) {
       }
       const id = "gmaps-sdk";
       if (document.getElementById(id)) {
-        (document.getElementById(id) as HTMLScriptElement).addEventListener("load", () => resolve());
+        (document.getElementById(id) as HTMLScriptElement).addEventListener(
+          "load",
+          () => resolve(),
+        );
         return;
       }
       const s = document.createElement("script");
@@ -32,7 +35,7 @@ export default function PlacesMapCard({ height = 260 }: { height?: number }) {
       s.async = true;
       s.defer = true;
       s.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(
-        key
+        key,
       )}&v=weekly`;
       s.onload = () => resolve();
       s.onerror = () => reject(new Error("Google Maps script failed to load"));
@@ -44,7 +47,12 @@ export default function PlacesMapCard({ height = 260 }: { height?: number }) {
     (async () => {
       try {
         await loadGoogleMaps();
-        if (cancelled || !divRef.current || !(window as any).google?.maps) return;
+        if (
+          cancelled ||
+          !divRef.current ||
+          !(window as any).google?.maps
+        )
+          return;
 
         const gm = (window as any).google.maps;
         const fallback = { lat: 35.7704, lng: -78.674 }; // Raleigh fallback
@@ -59,11 +67,16 @@ export default function PlacesMapCard({ height = 260 }: { height?: number }) {
           navigator.geolocation.getCurrentPosition(
             (pos) => {
               if (cancelled) return;
-              const here = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+              const here = {
+                lat: pos.coords.latitude,
+                lng: pos.coords.longitude,
+              };
               map.setCenter(here);
               new gm.Marker({ position: here, map });
             },
-            () => {} // ignore errors, stick to fallback
+            () => {
+              // ignore errors, stick to fallback
+            },
           );
         }
       } catch (err) {
@@ -76,8 +89,12 @@ export default function PlacesMapCard({ height = 260 }: { height?: number }) {
   }, []);
 
   return (
-    <div className="rounded-2xl border dark:border-neutral-800 overflow-hidden">
-      <div ref={divRef} style={{ height }} />
+    <div className="relative overflow-hidden rounded-2xl border border-neutral-200/80 bg-white/80 shadow-sm transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md">
+      {/* Actual map container */}
+      <div ref={divRef} style={{ height }} className="w-full" />
+
+      {/* Soft top gradient so it feels more like a card over the map */}
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-10 bg-gradient-to-b from-white/70 via-white/10 to-transparent" />
     </div>
   );
 }
