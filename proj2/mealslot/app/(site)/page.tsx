@@ -33,7 +33,7 @@ type User = {
 };
 
 // -------------------------
-// User Menu Component
+// User Menu
 // -------------------------
 function UserMenu({ user, onSignOut }: { user: User; onSignOut: () => void }) {
   const [open, setOpen] = useState(false);

@@ -9,7 +9,8 @@
 
 
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
-![Release](https://img.shields.io/github/v/release/FSChuang/CSC510-SE-Group8)
+![Release](https://img.shields.io/github/v/release/rithikkulkarni/csc-510-proj-3)
+[![DOI](https://zenodo.org/badge/1097253739.svg)](https://doi.org/10.5281/zenodo.17795085)
 
 
 # MealSlot — MVP Scaffolding
