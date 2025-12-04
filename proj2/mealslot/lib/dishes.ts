@@ -1,121 +1,106 @@
 import { prisma } from "@/lib/db";
 import type { Prisma } from "@prisma/client";
-import { Dish as UIDish } from "./schemas"; // UI/Spin Dish type (arrays)
+import { Dish as UIDish } from "./schemas";
 
-function splitCSV(s: string | null | undefined): string[] {
-  return (s ?? "")
-    .split(",")
-    .map((t) => t.trim())
-    .filter(Boolean);
-}
-function toUIDish(row: { id: string; name: string; category: string; tags: string; allergens: string; costBand: number; timeBand: number; isHealthy: boolean; ytQuery: string | null }): UIDish {
+// Parse JSON / CSV-ish text into a lowercased string[]
+const parseArrayField = (v: any): string[] => {
+  if (!v) return [];
+  if (Array.isArray(v)) {
+    if (v.length === 1 && typeof v[0] === "string" && v[0].startsWith('["')) {
+      // handle single JSON-stringified array in an array
+      return v[0]
+        .replace(/^\[|]$/g, "")
+        .split(",")
+        .map((s: string) => s.replace(/"/g, "").trim().toLowerCase())
+        .filter(Boolean);
+    }
+    return v.map((s: string) => String(s).trim().toLowerCase()).filter(Boolean);
+  }
+  if (typeof v === "string") {
+    try {
+      const parsed = JSON.parse(v);
+      if (Array.isArray(parsed)) {
+        return parsed.map((s: string) => String(s).trim().toLowerCase()).filter(Boolean);
+      }
+    } catch {
+      // fall through if not valid JSON
+    }
+    return v
+      .split(",")
+      .map((s) => s.trim().toLowerCase())
+      .filter(Boolean);
+  }
+  return [];
+};
+
+// Convert a Prisma row → UIDish
+function toUIDish(row: {
+  id: string;
+  name: string;
+  category: string;
+  tags: any;
+  allergens: any;
+  costBand: number;
+  timeBand: number;
+  isHealthy: boolean;
+  ytQuery: string | null;
+}): UIDish {
+  const tags = parseArrayField(row.tags);
+  const allergens = parseArrayField(row.allergens);
+
   return {
     id: row.id,
     name: row.name,
-    category: row.category,
-    tags: splitCSV(row.tags),
-    allergens: splitCSV(row.allergens),
+    category: row.category, // already "breakfast" | "lunch" | ...
+    tags,
+    allergens,
     costBand: row.costBand,
     timeBand: row.timeBand,
     isHealthy: row.isHealthy,
-    ytQuery: row.ytQuery ?? ""
+    ytQuery: row.ytQuery ?? "",
   };
 }
 
-const parseArrayField = (v: any): string[] => {
-	if (!v) return [];
-	if (Array.isArray(v)) {
-		// sometimes Prisma returns array of one string like '["dairy","gluten"]'
-		if (v.length === 1 && v[0].startsWith('["')) {
-			return v[0]
-				.replace(/^\[|]$/g, '')          // remove [ and ]
-				.split(',')
-				.map((s: string) => s.replace(/"/g, '').trim().toLowerCase());
-		}
-		return v.map((s: string) => s.trim().toLowerCase());
-	}
-	if (typeof v === "string") {
-		try {
-			const parsed = JSON.parse(v);
-			if (Array.isArray(parsed)) return parsed.map((s: string) => s.trim().toLowerCase());
-		} catch {}
-		return v.split(',').map((s: string) => s.trim().toLowerCase());
-	}
-	return [];
-};
-
-
-// ---- STATIC FALLBACK (your existing catalog) ----
-type Raw = [name: string, costBand: number, timeBand: number, isHealthy: boolean, allergens: string[], ytQuery: string];
-
-// … keep your existing static arrays here (MAIN / VEGGIE / SOUP / MEAT / DESSERT) …
-// … and the expand() logic you already had …
-
-// Example structure (you already had these in your original code):
-const MAIN: Raw[] = [
-  // ["Spaghetti", 2, 2, true, ["gluten"], "spaghetti bolognese"],
-  // ...
-];
-const VEGGIE: Raw[] = [];
-const SOUP: Raw[] = [];
-const MEAT: Raw[] = [];
-const DESSERT: Raw[] = [];
-
-// A helper to convert Raw to UIDish + assign category
-function fromRaw(category: string, raw: Raw[]): UIDish[] {
-  return raw.map(([name, costBand, timeBand, isHealthy, allergens, ytQuery]) => ({
-    id: `${category}-${name}`, // or whatever you were using
-    name,
-    category,
-    costBand,
-    timeBand,
-    isHealthy,
-    allergens,
-    tags: [], // or any tags you had
-    ytQuery,
-  }));
-}
-
-// Build STATIC_BY_CAT from those arrays
-const STATIC_BY_CAT: Record<string, UIDish[]> = {
-  MAIN: fromRaw("MAIN", MAIN),
-  VEGGIE: fromRaw("VEGGIE", VEGGIE),
-  SOUP: fromRaw("SOUP", SOUP),
-  MEAT: fromRaw("MEAT", MEAT),
-  DESSERT: fromRaw("DESSERT", DESSERT),
-};
-
-// ---- DB-first, fallback to static ----
 export async function dishes(
   category: string,
   tags: string[] = [],
   allergens: string[] = []
 ): Promise<UIDish[]> {
-  const where: Prisma.DishWhereInput = { category };
+  if (!category) return [];
+
+  const canonicalCategory = category.toLowerCase().trim();
+
+  const where: Prisma.DishWhereInput = {
+    category: {
+      equals: canonicalCategory,
+      mode: "insensitive",
+    },
+  };
+
   const rows = await prisma.dish.findMany({
     where,
     orderBy: [{ name: "asc" }],
   });
 
+  console.log("[dishes] category=", canonicalCategory, "rows=", rows.length);
+
   if (rows.length === 0) {
-    return (STATIC_BY_CAT[category] ?? []).slice();
+    console.warn("[dishes] No DB dishes for category:", canonicalCategory);
+    return [];
   }
 
   const norm = (s: string) => s.trim().toLowerCase();
-
-  const selectedTags = tags.map(norm);
-  const excludedAllergens = allergens.map(norm);
+  const selectedTags = (tags ?? []).map(norm);
+  const excludedAllergens = (allergens ?? []).map(norm);
 
   const filtered = rows.filter((r) => {
-    const rTags = parseArrayField(r.tags);           // normalized lowercase array
-    const rAllergens = parseArrayField(r.allergens); // normalized lowercase array
+    const rTags = parseArrayField(r.tags);
+    const rAllergens = parseArrayField(r.allergens);
 
-    // TAGS: keep dish only if it contains ALL selected tags (unchanged)
     const tagsOk =
       selectedTags.length === 0 ||
       selectedTags.every((t) => rTags.includes(t));
 
-    // ALLERGENS: EXCLUDE dish if it contains ANY selected allergen (reversed logic)
     const allergensOk =
       excludedAllergens.length === 0 ||
       rAllergens.every((a) => !excludedAllergens.includes(a));
@@ -123,9 +108,13 @@ export async function dishes(
     return tagsOk && allergensOk;
   });
 
-  // convert to UI shape
   return filtered.map(toUIDish);
 }
 
-// Export allDishes as a flat array of everything
-export const allDishes: UIDish[] = Object.values(STATIC_BY_CAT).flat();
+
+
+// If you still need allDishes elsewhere, you can make a DB-backed version like:
+// export async function getAllDishes(): Promise<UIDish[]> {
+//   const rows = await prisma.dish.findMany();
+//   return rows.map(toUIDish);
+// }

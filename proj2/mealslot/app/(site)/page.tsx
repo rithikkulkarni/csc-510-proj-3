@@ -22,6 +22,9 @@ import {
   categoryPillBase,
 } from "../../components/ui/style";
 
+// Canonical categories
+const CATEGORY_OPTIONS = ["breakfast", "lunch", "dinner", "dessert"] as const;
+
 // -------------------------
 // Types
 // -------------------------
@@ -42,7 +45,7 @@ type User = { name: string };
 // -------------------------
 function HomePage() {
   const [user, setUser] = useState<User | null>(null);
-  const [category, setCategory] = useState<string>("Breakfast");
+  const [category, setCategory] = useState<string>("breakfast");
   const [dishCount, setDishCount] = useState(0);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [selectedAllergens, setSelectedAllergens] = useState<string[]>([]);
@@ -189,40 +192,96 @@ function HomePage() {
   return (
     <div className={shellClass}>
       <div className={contentClass}>
-        <header className="flex flex-col md:flex-row md:justify-between md:items-center gap-3"> <div> <h1 className="text-2xl md:text-3xl font-semibold text-neutral-900"> What should we eat today? </h1> <p className="text-sm md:text-base text-neutral-600"> Spin the slots, tweak your filters, and let MealSlot pick your next meal—cook at home or find a spot nearby. </p> </div> </header> {/* Category selection */} <section className={cardClass}> <div className="flex items-center justify-between gap-3"> <h2 className={sectionTitleClass}>Choose Category</h2> <span className="rounded-full bg-orange-50 px-3 py-1 text-xs font-medium text-orange-700"> Step 1 · Pick the vibe </span> </div> <div className="mt-3 flex flex-wrap gap-2"> {["Breakfast", "Lunch", "Dinner", "Dessert"].map((c) => { const active = category === c.toLowerCase(); return (<button key={c.toLowerCase()} className={cn(categoryPillBase, active ? "border-transparent bg-gradient-to-r from-orange-500 to-rose-500 text-white shadow-sm hover:shadow-md" : "border-neutral-200 bg-white/90 text-neutral-700 hover:border-neutral-300 hover:bg-neutral-50 hover:text-neutral-900",)} onClick={() => setCategory((prev) => prev === c.toLowerCase() ? "" : c.toLowerCase(),)} aria-pressed={active} > {c} </button>); })} </div> </section>
+        {/* Header */}
+        <header className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-semibold text-neutral-900">
+              What should we eat today?
+            </h1>
+            <p className="text-sm md:text-base text-neutral-600">
+              Spin the slots, tweak your filters, and let MealSlot pick your next meal—
+              cook at home or find a spot nearby.
+            </p>
+          </div>
+        </header>
 
-        {/* Filters / power-ups */}
+        {/* Category selection */}
         <section className={cardClass}>
-          <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-            <div className="w-full md:w-2/3 space-y-4">
+          <div className="flex items-center justify-between gap-3">
+            <h2 className={sectionTitleClass}>Choose Category</h2>
+            <span className="rounded-full bg-orange-50 px-3 py-1 text-xs font-medium text-orange-700">
+              Step 1 · Pick the vibe
+            </span>
+          </div>
+
+          <div className="mt-3 flex flex-wrap gap-2">
+            {["Breakfast", "Lunch", "Dinner", "Dessert"].map((c) => {
+              const key = c.toLowerCase();
+              const active = category === key;
+
+              return (
+                <button
+                  key={key}
+                  className={cn(
+                    categoryPillBase,
+                    active
+                      ? "border-transparent bg-gradient-to-r from-orange-500 to-rose-500 text-white shadow-sm hover:shadow-md"
+                      : "border-neutral-200 bg-white/90 text-neutral-700 hover:border-neutral-300 hover:bg-neutral-50 hover:text-neutral-900",
+                  )}
+                  onClick={() =>
+                    setCategory((prev) => (prev === key ? "" : key))
+                  }
+                  aria-pressed={active}
+                >
+                  {c}
+                </button>
+              );
+            })}
+          </div>
+        </section>
+
+        <section className={cardClass}>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between gap-3">
               <h2 className={sectionTitleClass}>Filters</h2>
-              <FilterMenu
-                data={{ allergens: allAllergens, categories: allCategories }}
-                onAllergenChange={setSelectedAllergens}
-                onCategoryChange={setSelectedTags}
-              />
+              <span className="rounded-full bg-orange-50 px-3 py-1 text-xs font-medium text-orange-700">
+                Step 2 · Personalize
+              </span>
             </div>
-            <div className="w-full md:w-1/3 space-y-4 border-t border-dashed border-neutral-200 pt-4 md:border-l md:border-t-0 md:pl-4">
+            
+
+            {/* Allergens */}
+            <FilterMenu
+              data={{ allergens: allAllergens, categories: allCategories }}
+              onAllergenChange={setSelectedAllergens}
+              onCategoryChange={setSelectedTags}
+            />
+
+            {/* Power-Ups now live directly under Allergens */}
+            <div className="space-y-3 border-t border-dashed border-neutral-200 pt-4">
               <h3 className="text-sm font-semibold text-neutral-900">Power-Ups</h3>
               <p className={sectionSubtitleClass}>
-                Give the slot machine a nudge: healthier options, cheaper picks, or faster meals.
+                Give the slot machine a nudge: healthier options, cheaper picks, or
+                faster meals.
               </p>
               <PowerUps value={powerups} onChange={setPowerups} />
             </div>
           </div>
         </section>
 
+
         {/* Dish count + slots */}
         <section className={cardClass}>
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-            <div className="w-full lg:w-1/3 space-y-3">
+            <div className="w-full space-y-3 lg:w-1/3">
               <h2 className={sectionTitleClass}>How many dishes?</h2>
               <DishCountInput value={dishCount} onChange={setDishCount} />
               <p className={sectionSubtitleClass}>
-                Choose how many ideas you want to spin for. You can lock favorites
-                and spin again.
+                Choose how many ideas you want to spin for. You can lock favorites and
+                spin again.
               </p>
             </div>
+
             <div className="w-full lg:w-2/3">
               <SlotMachine
                 reelCount={dishCount}
@@ -236,61 +295,62 @@ function HomePage() {
         </section>
 
         {/* Selected dishes + actions */}
-        {
-          selection.length > 0 && (
-            <section
-              className={cn(
-                cardClass,
-                "animate-[fadeInUp_180ms_ease-out]",
-              )}
-            >
-              <h2 className={sectionTitleClass}>Selected Dishes</h2>
-              <ul className="mt-2 space-y-1.5 text-sm">
-                {selection.map((d) => (
-                  <li key={d.id} className="flex items-baseline gap-2">
-                    <span className="inline-block h-1.5 w-1.5 rounded-full bg-gradient-to-r from-orange-500 to-rose-500" />
-                    <div>
-                      <span className="font-medium text-neutral-900">
-                        {d.name}
-                      </span>{" "}
-                      <span className="text-xs uppercase tracking-wide text-neutral-500">
-                        ({d.category})
-                      </span>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-              <div className="mt-4 flex flex-wrap gap-3">
-                <button
-                  className="inline-flex items-center gap-1.5 rounded-full border border-neutral-200 bg-white px-3 py-1.5 text-xs font-medium text-neutral-800 shadow-sm transition-all hover:border-orange-300 hover:bg-orange-50 hover:text-orange-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400 focus-visible:ring-offset-2"
-                  onClick={() => setOpenVideoModal(true)}
-                >
-                  🍳 Cook at Home
-                </button>
-                <button
-                  className="inline-flex items-center gap-1.5 rounded-full border border-neutral-200 bg-white px-3 py-1.5 text-xs font-medium text-neutral-800 shadow-sm transition-all hover:border-sky-300 hover:bg-sky-50 hover:text-sky-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-offset-2"
-                  onClick={() => {
-                    if ("geolocation" in navigator) {
-                      navigator.geolocation.getCurrentPosition(
-                        (pos) =>
-                          fetchVenues({
-                            lat: pos.coords.latitude,
-                            lng: pos.coords.longitude,
-                          }),
-                        () => fetchVenues(),
-                        { maximumAge: 1000 * 60 * 5, timeout: 10000 },
-                      );
-                    } else {
-                      fetchVenues();
-                    }
-                  }}
-                >
-                  📍 Eat Outside
-                </button>
-              </div>
-            </section>
-          )
-        }
+        {selection.length > 0 && (
+          <section
+            className={cn(
+              cardClass,
+              "animate-[fadeInUp_180ms_ease-out]",
+            )}
+          >
+            <h2 className={sectionTitleClass}>Selected Dishes</h2>
+
+            <ul className="mt-2 space-y-1.5 text-sm">
+              {selection.map((d) => (
+                <li key={d.id} className="flex items-baseline gap-2">
+                  <span className="inline-block h-1.5 w-1.5 rounded-full bg-gradient-to-r from-orange-500 to-rose-500" />
+                  <div>
+                    <span className="font-medium text-neutral-900">
+                      {d.name}
+                    </span>{" "}
+                    <span className="text-xs uppercase tracking-wide text-neutral-500">
+                      ({d.category})
+                    </span>
+                  </div>
+                </li>
+              ))}
+            </ul>
+
+            <div className="mt-4 flex flex-wrap gap-3">
+              <button
+                className="inline-flex items-center gap-1.5 rounded-full border border-neutral-200 bg-white px-3 py-1.5 text-xs font-medium text-neutral-800 shadow-sm transition-all hover:border-orange-300 hover:bg-orange-50 hover:text-orange-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400 focus-visible:ring-offset-2"
+                onClick={() => setOpenVideoModal(true)}
+              >
+                🍳 Cook at Home
+              </button>
+
+              <button
+                className="inline-flex items-center gap-1.5 rounded-full border border-neutral-200 bg-white px-3 py-1.5 text-xs font-medium text-neutral-800 shadow-sm transition-all hover:border-sky-300 hover:bg-sky-50 hover:text-sky-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-offset-2"
+                onClick={() => {
+                  if ("geolocation" in navigator) {
+                    navigator.geolocation.getCurrentPosition(
+                      (pos) =>
+                        fetchVenues({
+                          lat: pos.coords.latitude,
+                          lng: pos.coords.longitude,
+                        }),
+                      () => fetchVenues(),
+                      { maximumAge: 1000 * 60 * 5, timeout: 10000 },
+                    );
+                  } else {
+                    fetchVenues();
+                  }
+                }}
+              >
+                📍 Eat Outside
+              </button>
+            </div>
+          </section>
+        )}
 
         {/* Recipes modal */}
         <Modal
@@ -326,7 +386,9 @@ function HomePage() {
                       {v.cuisine} • {v.price} • {v.rating.toFixed(1)}★ •{" "}
                       {v.distance_km} km
                     </div>
-                    <div className="mt-1 text-xs text-neutral-500">{v.addr}</div>
+                    <div className="mt-1 text-xs text-neutral-500">
+                      {v.addr}
+                    </div>
                     <a
                       className="mt-2 inline-block text-xs font-medium text-orange-700 underline-offset-2 hover:underline"
                       href={v.url}
@@ -338,6 +400,7 @@ function HomePage() {
                   </div>
                 ))}
               </div>
+
               <div className="mt-4 overflow-hidden rounded-2xl border border-neutral-200 shadow-sm">
                 <MapWithPins venues={venues} />
               </div>
@@ -352,8 +415,8 @@ function HomePage() {
             </div>
           )}
         </section>
-      </div >
-    </div >
+      </div>
+    </div>
   );
 }
 
