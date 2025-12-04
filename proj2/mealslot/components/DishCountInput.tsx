@@ -1,7 +1,8 @@
 // --- path: components/DishCountInput.tsx ---
 "use client";
 
-import React, { useState, type ChangeEvent } from "react";
+import React, { useState } from "react";
+import { cn } from "./ui/cn";
 
 type DishCountInputProps = {
   value: number;
@@ -13,9 +14,10 @@ export default function DishCountInput({ value, onChange }: DishCountInputProps)
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
-    // Allow empty string so user can delete and type
+
     if (/^\d*$/.test(val)) {
       setInput(val);
+
       if (val === "") return;
       const parsed = Math.max(0, parseInt(val, 10) || 0);
       onChange(parsed);
@@ -23,36 +25,60 @@ export default function DishCountInput({ value, onChange }: DishCountInputProps)
   };
 
   const handleBlur = () => {
-    // Normalize empty to previous value (or 0)
     if (input === "") {
       setInput(String(value ?? 0));
       onChange(value ?? 0);
     }
   };
 
+  const pillBtn =
+    "inline-flex items-center justify-center rounded-full border px-3 py-1.5 text-sm font-medium transition-all duration-150 ease-out hover:-translate-y-0.5 hover:scale-[1.07] active:scale-[0.95] hover:bg-neutral-50 hover:border-neutral-300 bg-white border-neutral-200 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-50";
+
   return (
-    <div className="flex items-center gap-2">
-      <label className="text-sm font-medium">Number of Dishes:</label>
-      <input
-        type="text"
-        inputMode="numeric"
-        pattern="[0-9]*"
-        value={input}
-        onChange={handleChange}
-        onBlur={handleBlur}
-        className={[
-          "w-16 rounded border px-2 py-1 text-sm",
-          // ✅ explicit light-mode styles
-          "bg-white text-neutral-900 placeholder:text-neutral-500 border-neutral-300",
-          // ✅ dark-mode styles
-          "dark:bg-neutral-900 dark:text-neutral-100 dark:placeholder:text-neutral-400 dark:border-neutral-700",
-          // focus states
-          "focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-orange-400",
-          "dark:focus:ring-neutral-600 dark:focus:border-neutral-600",
-        ].join(" ")}
-        placeholder="0"
-        aria-label="Number of dishes"
-      />
+    <div className="flex items-center gap-3">
+      <label className="text-sm font-medium text-neutral-800">
+        Number of Dishes:
+      </label>
+
+      <div className="flex items-center gap-2">
+        {/* Decrement */}
+        <button
+          type="button"
+          onClick={() => onChange(Math.max(0, value - 1))}
+          className={pillBtn}
+          aria-label="Decrease dish count"
+        >
+          –
+        </button>
+
+        {/* Input */}
+        <input
+          type="text"
+          inputMode="numeric"
+          pattern="[0-9]*"
+          value={input}
+          onChange={handleChange}
+          onBlur={handleBlur}
+          className={cn(
+            "w-20 rounded-full border px-3 py-1.5 text-sm font-medium text-center transition-all",
+            "bg-white text-neutral-900 placeholder:text-neutral-500 border-neutral-200 shadow-sm",
+            "hover:border-neutral-300 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-orange-400",
+            "active:scale-[0.98]",
+          )}
+          placeholder="0"
+          aria-label="Number of dishes"
+        />
+
+        {/* Increment */}
+        <button
+          type="button"
+          onClick={() => onChange(Math.max(0, value + 1))}
+          className={pillBtn}
+          aria-label="Increase dish count"
+        >
+          +
+        </button>
+      </div>
     </div>
   );
 }
