@@ -9,16 +9,7 @@ import React, {
   useRef,
   useState,
 } from "react";
-import {
-  Crown,
-  Link as LinkIcon,
-  LogOut,
-  Shuffle,
-  RotateCcw,
-  Lock,
-  Unlock,
-  ThumbsUp,
-} from "lucide-react";
+import { Crown, Link as LinkIcon, LogOut, Shuffle, RotateCcw, Lock, Unlock, ThumbsUp } from "lucide-react";
 import { z } from "zod";
 import { PrefsSchema, DietEnum, AllergenEnum } from "@/lib/party";
 import { getRealtimeForRoom } from "@/lib/realtime";
@@ -26,8 +17,8 @@ import PlacesMapCard from "@/components/PlacesMapCard";
 import { cn } from "./ui/cn"; 
 
 /** ——— Presence tuning ——— */
-const HEARTBEAT_MS = 15_000; // send a beat every 15s
-const PEER_TTL_MS = 120_000; // consider peers alive for 2 minutes since lastSeen
+const HEARTBEAT_MS = 15_000;   // send a beat every 15s
+const PEER_TTL_MS = 120_000;  // consider peers alive for 2 minutes since lastSeen
 
 /** ————— Types ————— */
 type Dish = {
@@ -85,29 +76,22 @@ function ToggleChip({
 }
 
 function Ribbon({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-neutral-500">
-      {children}
-    </div>
-  );
+  return <div className="mb-2 text-sm font-semibold">{children}</div>;
 }
 function Pill({ children }: { children: React.ReactNode }) {
-  return (
-    <span className="inline-flex items-center rounded-full border border-neutral-200 bg-white/90 px-2.5 py-0.5 text-[11px] font-medium text-neutral-800 shadow-sm transition-all duration-150 ease-out hover:-translate-y-0.5 hover:shadow-md dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100">
-      {children}
-    </span>
-  );
+  return <span className="rounded-full border px-2 py-0.5 text-xs bg-neutral-100 border-neutral-300 text-neutral-900 dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-100">{children}</span>;
 }
 function Card({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="rounded-2xl border border-neutral-200/80 bg-white/80 p-3 shadow-sm backdrop-blur-sm transition-all duration-150 ease-out hover:-translate-y-0.5 hover:shadow-[0_18px_45px_rgba(15,23,42,0.08)] dark:border-neutral-800 dark:bg-neutral-900">
-      {children}
-    </div>
-  );
+  return <div className="rounded-2xl border bg-white p-3 dark:border-neutral-800 dark:bg-neutral-900">{children}</div>;
 }
 
+type PartyClientProps = {
+  code?: string;
+  onCodeChange?: (code: string) => void; // <-- add this
+};
+
 /** ————— Component ————— */
-export default function PartyClient({ code: initialCode }: { code?: string }) {
+export default function PartyClient({ code: initialCode, onCodeChange }: PartyClientProps) {
   /** nickname (persist) */
   const [nickname, setNickname] = useState<string>(() => {
     try {
@@ -116,11 +100,7 @@ export default function PartyClient({ code: initialCode }: { code?: string }) {
       return "Guest";
     }
   });
-  useEffect(() => {
-    try {
-      localStorage.setItem("mealslot_nickname", nickname);
-    } catch {}
-  }, [nickname]);
+  useEffect(() => { try { localStorage.setItem("mealslot_nickname", nickname); } catch { } }, [nickname]);
 
   /** membership + server */
   const [code, setCode] = useState<string>(initialCode?.toUpperCase() ?? "");
@@ -133,22 +113,10 @@ export default function PartyClient({ code: initialCode }: { code?: string }) {
   const [transport, setTransport] = useState<string>("");
 
   /** spin filters */
-  const [cats, setCats] = useState<{
-    breakfast: boolean;
-    lunch: boolean;
-    dinner: boolean;
-    dessert: boolean;
-  }>({
-    breakfast: false,
-    lunch: false,
-    dinner: true,
-    dessert: false,
+  const [cats, setCats] = useState<{ breakfast: boolean; lunch: boolean; dinner: boolean; dessert: boolean }>({
+    breakfast: false, lunch: false, dinner: true, dessert: false
   });
-  const [powerups, setPowerups] = useState<{
-    healthy?: boolean;
-    cheap?: boolean;
-    fast?: boolean;
-  }>({});
+  const [powerups, setPowerups] = useState<{ healthy?: boolean; cheap?: boolean; fast?: boolean }>({});
 
   /** prefs */
   const [prefs, setPrefs] = useState<z.infer<typeof PrefsSchema>>({});
@@ -156,25 +124,20 @@ export default function PartyClient({ code: initialCode }: { code?: string }) {
   /** spin state */
   const [isSpinning, setIsSpinning] = useState(false);
   const [slots, setSlots] = useState<SpinTriple>([null, null, null]);
-  const [locks, setLocks] = useState<[boolean, boolean, boolean]>([
-    false,
-    false,
-    false,
-  ]);
+  const [locks, setLocks] = useState<[boolean, boolean, boolean]>([false, false, false]);
   const [recent, setRecent] = useState<string[]>([]);
 
   /** votes per slot (keep / reroll) */
-  const [votes, setVotes] = useState<
-    [
-      { keep: Set<string>; reroll: Set<string> },
-      { keep: Set<string>; reroll: Set<string> },
-      { keep: Set<string>; reroll: Set<string> },
-    ]
-  >([
+  const [votes, setVotes] = useState<[
+    { keep: Set<string>; reroll: Set<string> },
+    { keep: Set<string>; reroll: Set<string> },
+    { keep: Set<string>; reroll: Set<string> }
+  ]>([
     { keep: new Set(), reroll: new Set() },
     { keep: new Set(), reroll: new Set() },
     { keep: new Set(), reroll: new Set() },
   ]);
+
   const resetVotes = () =>
     setVotes([
       { keep: new Set(), reroll: new Set() },
@@ -209,14 +172,8 @@ export default function PartyClient({ code: initialCode }: { code?: string }) {
   const createdRef = useRef(false);
 
   /** refs for stable handlers */
-  const slotsRef = useRef(slots);
-  useEffect(() => {
-    slotsRef.current = slots;
-  }, [slots]);
-  const locksRef = useRef(locks);
-  useEffect(() => {
-    locksRef.current = locks;
-  }, [locks]);
+  const slotsRef = useRef(slots); useEffect(() => { slotsRef.current = slots; }, [slots]);
+  const locksRef = useRef(locks); useEffect(() => { locksRef.current = locks; }, [locks]);
   const livePeersRef = useRef<Peer[]>([]);
 
   /** computed */
@@ -228,15 +185,9 @@ export default function PartyClient({ code: initialCode }: { code?: string }) {
     return pruned;
   }, [peers]);
 
-  const hostId = useMemo(
-    () => livePeers.find((p) => p.creator)?.id ?? livePeers[0]?.id ?? null,
-    [livePeers],
-  );
+  const hostId = useMemo(() => livePeers.find(p => p.creator)?.id ?? livePeers[0]?.id ?? null, [livePeers]);
   const iAmHost = !!memberId && hostId === memberId;
-  const iAmHostRef = useRef(iAmHost);
-  useEffect(() => {
-    iAmHostRef.current = iAmHost;
-  }, [iAmHost]);
+  const iAmHostRef = useRef(iAmHost); useEffect(() => { iAmHostRef.current = iAmHost; }, [iAmHost]);
 
   const displayName = useMemo(() => {
     const me = state?.members.find((m) => m.id === memberId);
@@ -254,15 +205,8 @@ export default function PartyClient({ code: initialCode }: { code?: string }) {
 
   /** disconnect */
   const disconnect = useCallback(() => {
-    try {
-      rtRef.current?.emit("bye", {
-        code: activeCode,
-        clientId: clientIdRef.current,
-      });
-    } catch {}
-    try {
-      rtRef.current?.close();
-    } catch {}
+    try { rtRef.current?.emit("bye", { code: activeCode, clientId: clientIdRef.current }); } catch { }
+    try { rtRef.current?.close(); } catch { }
     rtRef.current = null;
     setTransport("");
   }, [activeCode]);
@@ -308,12 +252,7 @@ export default function PartyClient({ code: initialCode }: { code?: string }) {
       }
 
       const rt = await getRealtimeForRoom(activeCode);
-      if (cancelled) {
-        try {
-          rt.close();
-        } catch {}
-        return;
-      }
+      if (cancelled) { try { rt.close(); } catch { }; return; }
       rtRef.current = rt;
       setTransport(rt.kind);
 
@@ -323,14 +262,7 @@ export default function PartyClient({ code: initialCode }: { code?: string }) {
       rt.on("hello", (p: any) => {
         if (!p || p.code !== activeCode) return;
         touchPeer(p.clientId, p.nickname, !!p.creator);
-        try {
-          rt.emit("here", {
-            code: activeCode,
-            clientId: clientIdRef.current,
-            nickname: displayName,
-            creator: createdRef.current,
-          });
-        } catch {}
+        try { rt.emit("here", { code: activeCode, clientId: clientIdRef.current, nickname: displayName, creator: createdRef.current }); } catch { }
       });
 
       rt.on("here", (p: any) => {
@@ -345,11 +277,7 @@ export default function PartyClient({ code: initialCode }: { code?: string }) {
 
       rt.on("bye", (p: any) => {
         if (!p || p.code !== activeCode) return;
-        setPeers((prev) => {
-          const cp = { ...prev };
-          delete cp[p.clientId];
-          return cp;
-        });
+        setPeers(prev => { const cp = { ...prev }; delete cp[p.clientId]; return cp; });
       });
 
       // Nick
@@ -360,19 +288,10 @@ export default function PartyClient({ code: initialCode }: { code?: string }) {
 
       // Chat
       rt.on("chat", (m: any) => {
-        if (!m || m.code !== activeCode || !m.id || seenMsgIds.has(m.id))
-          return;
+        if (!m || m.code !== activeCode || !m.id || seenMsgIds.has(m.id)) return;
         seenMsgIds.add(m.id);
         touchPeer(m.clientId ?? "", undefined); // if server includes clientId, this keeps them fresh
-        setChat((c) => [
-          ...c,
-          {
-            id: m.id,
-            ts: m.ts,
-            from: m.from || "anon",
-            text: String(m.text || ""),
-          },
-        ]);
+        setChat(c => [...c, { id: m.id, ts: m.ts, from: m.from || "anon", text: String(m.text || "") }]);
       });
 
       // Spin sync
@@ -384,7 +303,7 @@ export default function PartyClient({ code: initialCode }: { code?: string }) {
         const summary: string = payload.summary || "";
         if (summary && summary !== lastSpinSummaryRef.current) {
           lastSpinSummaryRef.current = summary;
-          setRecent((r) => [summary, ...r].slice(0, 30));
+          setRecent(r => [summary, ...r].slice(0, 30));
         }
       });
 
@@ -397,7 +316,7 @@ export default function PartyClient({ code: initialCode }: { code?: string }) {
             locks: locksRef.current,
             summary: lastSpinSummaryRef.current,
           });
-        } catch {}
+        } catch { }
       });
 
       // Votes
@@ -419,32 +338,17 @@ export default function PartyClient({ code: initialCode }: { code?: string }) {
       });
 
       // announce + heartbeat
-      try {
-        rt.emit("hello", {
-          code: activeCode,
-          clientId: clientIdRef.current,
-          nickname: displayName,
-          creator: createdRef.current,
-        });
-      } catch {}
+      try { rt.emit("hello", { code: activeCode, clientId: clientIdRef.current, nickname: displayName, creator: createdRef.current }); } catch { }
       // Heartbeat: also self-touch locally so we never prune ourselves even if server doesn't echo in throttled tabs
       const sendBeat = () => {
-        try {
-          rt.emit("beat", { code: activeCode, clientId: clientIdRef.current });
-        } catch {}
+        try { rt.emit("beat", { code: activeCode, clientId: clientIdRef.current }); } catch { }
         touchPeer(clientIdRef.current); // local keepalive
       };
       sendBeat();
       const hb = setInterval(sendBeat, HEARTBEAT_MS);
 
       // newbies request sync
-      try {
-        if (!iAmHostRef.current)
-          rt.emit("sync_request", {
-            code: activeCode,
-            clientId: clientIdRef.current,
-          });
-      } catch {}
+      try { if (!iAmHostRef.current) rt.emit("sync_request", { code: activeCode, clientId: clientIdRef.current }); } catch { }
 
       if (!pushedConnectedRef.current) {
         pushSys(`Connected via ${rt.kind}.`);
@@ -508,14 +412,10 @@ export default function PartyClient({ code: initialCode }: { code?: string }) {
     createdRef.current = true;
     setActiveCode(j.code);
     clientIdRef.current = j.memberId;
+    onCodeChange?.(j.code);
+
     await fetchState(j.code);
-    try {
-      rtRef.current?.emit("nick", {
-        code: j.code,
-        clientId: j.memberId,
-        nickname: j.nickname,
-      });
-    } catch {}
+    try { rtRef.current?.emit("nick", { code: j.code, clientId: j.memberId, nickname: j.nickname }); } catch { }
   }, [nickname, fetchState]);
 
   const onJoin = useCallback(async () => {
@@ -532,82 +432,47 @@ export default function PartyClient({ code: initialCode }: { code?: string }) {
     createdRef.current = false;
     setActiveCode(code);
     clientIdRef.current = j.memberId;
+    onCodeChange?.(code);
     await fetchState(code);
-    try {
-      rtRef.current?.emit("nick", {
-        code,
-        clientId: j.memberId,
-        nickname: j.nickname,
-      });
-    } catch {}
-    try {
-      rtRef.current?.emit("sync_request", { code, clientId: j.memberId });
-    } catch {}
+    try { rtRef.current?.emit("nick", { code, clientId: j.memberId, nickname: j.nickname }); } catch { }
+    try { rtRef.current?.emit("sync_request", { code, clientId: j.memberId }); } catch { }
   }, [code, nickname, fetchState]);
 
   const onLeave = useCallback(() => {
-    disconnect();
-    setMemberId(null);
-    setActiveCode("");
-    setPeers({});
-    setSlots([null, null, null]);
-    setLocks([false, false, false]);
-    resetVotes();
+    disconnect(); setMemberId(null); setActiveCode(""); setPeers({}); setSlots([null, null, null]); setLocks([false, false, false]); resetVotes();
   }, [disconnect]);
 
   /** prefs push */
   const [prefsStateGuard] = useState(0); // no-op, keeps deps stable
-  const pushPrefs = useCallback(
-    async (next: Partial<z.infer<typeof PrefsSchema>>) => {
-      const merged = { ...prefs, ...next };
-      setPrefs(merged);
-      if (!state?.party?.id || !memberId) return;
-      const r = await fetch("/api/party/update", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ partyId: state.party.id, memberId, prefs: merged }),
-      });
-      if (r.ok) {
-        const j = await r.json();
-        setState((s) =>
-          s ? { ...s, party: { ...s.party, constraints: j.merged } } : s,
-        );
-      }
-      try {
-        rtRef.current?.emit("prefs", {
-          code: activeCode,
-          memberId,
-          prefs: merged,
-        });
-      } catch {}
-    },
-    [prefs, state?.party?.id, memberId, activeCode, prefsStateGuard],
-  );
+  const pushPrefs = useCallback(async (next: Partial<z.infer<typeof PrefsSchema>>) => {
+    const merged = { ...prefs, ...next };
+    setPrefs(merged);
+    if (!state?.party?.id || !memberId) return;
+    const r = await fetch("/api/party/update", {
+      method: "POST", headers: { "content-type": "application/json" },
+      body: JSON.stringify({ partyId: state.party.id, memberId, prefs: merged })
+    });
+    if (r.ok) {
+      const j = await r.json();
+      setState(s => s ? { ...s, party: { ...s.party, constraints: j.merged } } : s);
+    }
+    try { rtRef.current?.emit("prefs", { code: activeCode, memberId, prefs: merged }); } catch { }
+  }, [prefs, state?.party?.id, memberId, activeCode, prefsStateGuard]);
+
 
   /** broadcast helpers */
   const summarize = (trip: SpinTriple) =>
-    trip
-      .map(
-        (d, i) =>
-          `${["Main", "Side", "Dessert"][i]}: ${d?.name ?? "—"}`,
-      )
-      .join(" · ");
+    trip.map((d, i) => `${["Main", "Side", "Dessert"][i]}: ${d?.name ?? "—"}`).join(" · ");
 
-  const emitSpinBroadcast = useCallback(
-    (trip: SpinTriple, lk: [boolean, boolean, boolean]) => {
-      const summary = summarize(trip);
-      lastSpinSummaryRef.current = summary;
-      try {
-        rtRef.current?.emit("spin_result", {
-          code: activeCode,
-          slots: trip,
-          locks: lk,
-          summary,
-        });
-      } catch {}
-    },
-    [activeCode],
-  );
+  const emitSpinBroadcast = useCallback((trip: SpinTriple, lk: [boolean, boolean, boolean]) => {
+    const summary = summarize(trip);
+    lastSpinSummaryRef.current = summary;
+    try {
+      rtRef.current?.emit("spin_result", {
+        code: activeCode, slots: trip, locks: lk, summary
+      });
+    } catch { }
+  }, [activeCode]);
 
   /** spinning (HOST ONLY) */
   const onGroupSpin = useCallback(async () => {
@@ -658,107 +523,81 @@ export default function PartyClient({ code: initialCode }: { code?: string }) {
   const rerollSingleSlotHost = constUseCallbackRerollSingleSlotHost();
 
   function constUseCallbackRerollSingleSlotHost() {
-    return useCallback(
-      async (idx: 0 | 1 | 2) => {
-        if (!iAmHost) return;
-        const lockedOverride: [boolean, boolean, boolean] = [true, true, true];
-        lockedOverride[idx] = false; // only this slot changes
-        setIsSpinning(true);
-        try {
-          const endpoint = `${window.location.origin}/api/party/spin`;
-          const r = await fetch(endpoint, {
-            method: "POST",
-            headers: { "content-type": "application/json" },
-            cache: "no-store",
-            body: JSON.stringify({
-              code: activeCode,
-              categories: categoriesArray,
-              constraints: state?.party?.constraints || {},
-              locked: lockedOverride,
-              slots: slotsRef.current,
-              powerups,
-            }),
-          });
-          const j = await r.json().catch(() => ({}));
-          const trip =
-            (j?.selection as SpinTriple) ?? slotsRef.current;
-          setSlots(trip);
-          setRecent((rm) => [summarize(trip), ...rm].slice(0, 50));
-          resetVotes();
-          emitSpinBroadcast(trip, lockedOverride);
-        } catch (e) {
-          console.error(e);
-          alert("Re-roll failed.");
-        } finally {
-          setIsSpinning(false);
-        }
-      },
-      [
-        iAmHost,
-        activeCode,
-        categoriesArray,
-        state?.party?.constraints,
-        powerups,
-        emitSpinBroadcast,
-      ],
-    );
+    return useCallback(async (idx: 0 | 1 | 2) => {
+      if (!iAmHost) return;
+      const lockedOverride: [boolean, boolean, boolean] = [true, true, true];
+      lockedOverride[idx] = false; // only this slot changes
+      setIsSpinning(true);
+      try {
+        const endpoint = `${window.location.origin}/api/party/spin`;
+        const r = await fetch(endpoint, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          cache: "no-store",
+          body: JSON.stringify({
+            code: activeCode,
+            categories: categoriesArray,
+            constraints: state?.party?.constraints || {},
+            locked: lockedOverride,
+            slots: slotsRef.current,
+            powerups,
+          }),
+        });
+        const j = await r.json().catch(() => ({}));
+        const trip = (j?.selection as SpinTriple) ?? slotsRef.current;
+        setSlots(trip);
+        setRecent((rm) => [summarize(trip), ...rm].slice(0, 50));
+        resetVotes();
+        emitSpinBroadcast(trip, lockedOverride);
+      } catch (e) {
+        console.error(e);
+        alert("Re-roll failed.");
+      } finally {
+        setIsSpinning(false);
+      }
+    }, [iAmHost, activeCode, categoriesArray, state?.party?.constraints, powerups, emitSpinBroadcast]);
   }
 
   /** lock toggles (host drives the authoritative lock) */
-  const toggleLock = useCallback(
-    (idx: 0 | 1 | 2) => {
-      if (!iAmHost) return;
-      setLocks((l) => {
-        const cp: [boolean, boolean, boolean] = [...l] as any;
-        cp[idx] = !cp[idx];
-        locksRef.current = cp;
-        emitSpinBroadcast(slotsRef.current, cp);
-        return cp;
-      });
-    },
-    [iAmHost, emitSpinBroadcast],
-  );
+  const toggleLock = useCallback((idx: 0 | 1 | 2) => {
+    if (!iAmHost) return;
+    setLocks(l => {
+      const cp: [boolean, boolean, boolean] = [...l] as any;
+      cp[idx] = !cp[idx];
+      locksRef.current = cp;
+      emitSpinBroadcast(slotsRef.current, cp);
+      return cp;
+    });
+  }, [iAmHost, emitSpinBroadcast]);
 
   /** votes: quorum and action */
-  const quorum = useMemo(
-    () => Math.max(1, Math.floor(livePeersRef.current.length / 2) + 1),
-    [livePeers],
-  );
+  const quorum = useMemo(() => Math.max(1, Math.floor(livePeersRef.current.length / 2) + 1), [livePeers]);
 
-  const sendVote = useCallback(
-    (idx: 0 | 1 | 2, kind: "keep" | "reroll") => {
-      if (!activeCode || !memberId) return;
-      const pkt: VotePacket = { idx, kind, voterId: memberId };
-      // local optimistic update
-      setVotes((prev) => {
-        const cp = [
-          { keep: new Set(prev[0].keep), reroll: new Set(prev[0].reroll) },
-          { keep: new Set(prev[1].keep), reroll: new Set(prev[1].reroll) },
-          { keep: new Set(prev[2].keep), reroll: new Set(prev[2].reroll) },
-        ] as typeof prev;
-        cp[idx].keep.delete(memberId);
-        cp[idx].reroll.delete(memberId);
-        cp[idx][kind].add(memberId);
-        return cp;
-      });
-      try {
-        rtRef.current?.emit("vote", {
-          ...pkt,
-          code: activeCode,
-          clientId: memberId,
-        });
-      } catch {}
-      if (iAmHost) maybeActOnVotes(idx);
-    },
-    [activeCode, memberId, iAmHost],
-  );
+  const sendVote = useCallback((idx: 0 | 1 | 2, kind: "keep" | "reroll") => {
+    if (!activeCode || !memberId) return;
+    const pkt: VotePacket = { idx, kind, voterId: memberId };
+    // local optimistic update
+    setVotes(prev => {
+      const cp = [
+        { keep: new Set(prev[0].keep), reroll: new Set(prev[0].reroll) },
+        { keep: new Set(prev[1].keep), reroll: new Set(prev[1].reroll) },
+        { keep: new Set(prev[2].keep), reroll: new Set(prev[2].reroll) },
+      ] as typeof prev;
+      cp[idx].keep.delete(memberId);
+      cp[idx].reroll.delete(memberId);
+      cp[idx][kind].add(memberId);
+      return cp;
+    });
+    try { rtRef.current?.emit("vote", { ...pkt, code: activeCode, clientId: memberId }); } catch { }
+    if (iAmHost) maybeActOnVotes(idx);
+  }, [activeCode, memberId, iAmHost]);
 
   const maybeActOnVotes = (idx: 0 | 1 | 2) => {
     const v = votes[idx];
     const keepCount = v.keep.size;
     const rerollCount = v.reroll.size;
     if (keepCount >= quorum) {
-      setLocks((l) => {
+      setLocks(l => {
         const cp: [boolean, boolean, boolean] = [...l] as any;
         cp[idx] = true;
         locksRef.current = cp;
@@ -780,35 +619,15 @@ export default function PartyClient({ code: initialCode }: { code?: string }) {
   };
 
   /** chat */
-  const sendChat = useCallback(
-    (text: string) => {
-      if (!text.trim() || !activeCode) return;
-      const msg: ChatMsg = {
-        id: crypto.randomUUID(),
-        ts: Date.now(),
-        from: displayName,
-        text,
-      };
-      setChat((c) => [...c, msg]); // local echo
-      try {
-        rtRef.current?.emit("chat", {
-          ...msg,
-          code: activeCode,
-          clientId: memberId,
-        });
-      } catch {}
-    },
-    [activeCode, displayName, memberId],
-  );
+  const sendChat = useCallback((text: string) => {
+    if (!text.trim() || !activeCode) return;
+    const msg: ChatMsg = { id: crypto.randomUUID(), ts: Date.now(), from: displayName, text };
+    setChat(c => [...c, msg]); // local echo
+    try { rtRef.current?.emit("chat", { ...msg, code: activeCode, clientId: memberId }); } catch { }
+  }, [activeCode, displayName, memberId]);
 
   /** ——— Render helpers ——— */
-  const SpinCard = ({
-    slot,
-    idx,
-  }: {
-    slot: Dish | null;
-    idx: 0 | 1 | 2;
-  }) => {
+  const SpinCard = ({ slot, idx }: { slot: Dish | null; idx: 0 | 1 | 2 }) => {
     const v = votes[idx];
     const myId = memberId || "";
     const iVotedKeep = v.keep.has(myId);
@@ -823,9 +642,7 @@ export default function PartyClient({ code: initialCode }: { code?: string }) {
     return (
       <Card>
         <div className="mb-1 flex items-center justify-between text-xs text-neutral-500 dark:text-neutral-300">
-          <div className="font-semibold text-neutral-800 dark:text-neutral-100">
-            {["Main", "Side", "Dessert"][idx]}
-          </div>
+          <div className="font-semibold">{["Main", "Side", "Dessert"][idx]}</div>
           <button
             type="button"
             onClick={() => toggleLock(idx)}
@@ -840,11 +657,7 @@ export default function PartyClient({ code: initialCode }: { code?: string }) {
             ].join(" ")}
             title={iAmHost ? (locks[idx] ? "Unlock" : "Lock") : "Host only"}
           >
-            {locks[idx] ? (
-              <Unlock className="h-3 w-3" />
-            ) : (
-              <Lock className="h-3 w-3" />
-            )}
+            {locks[idx] ? <Unlock className="h-3 w-3" /> : <Lock className="h-3 w-3" />}
             {locks[idx] ? "Unlock" : "Lock"}
           </button>
         </div>
@@ -856,9 +669,7 @@ export default function PartyClient({ code: initialCode }: { code?: string }) {
           {slot && (
             <div className="mt-1 flex flex-wrap gap-1.5">
               <Pill>{slot.category}</Pill>
-              {slot.tags.slice(0, 2).map((t) => (
-                <Pill key={t}>{t}</Pill>
-              ))}
+              {slot.tags.slice(0, 2).map(t => <Pill key={t}>{t}</Pill>)}
             </div>
           )}
         </div>
@@ -948,18 +759,13 @@ export default function PartyClient({ code: initialCode }: { code?: string }) {
           <div />
           <input
             value={code}
-            onChange={(e) =>
-              setCode(e.currentTarget.value.toUpperCase().slice(0, 6))
-            }
+            onChange={(e) => setCode(e.currentTarget.value.toUpperCase().slice(0, 6))}
             placeholder="ABC123"
             className="col-span-1 w-24 rounded-lg border border-neutral-200 bg-white px-2 py-1 text-sm font-mono tracking-wider text-neutral-900 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400 focus-visible:ring-offset-2 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
           />
           <button
             type="button"
-            className={cn(
-              secondarySmallButtonBase,
-              "border-neutral-200 bg-white text-neutral-800 hover:border-neutral-300 hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100",
-            )}
+            className="inline-flex items-center gap-1 rounded border border-neutral-300 px-2 py-1 text-xs hover:bg-neutral-50 dark:border-neutral-700 dark:hover:bg-neutral-800"
             onClick={() => code && navigator.clipboard.writeText(code)}
             disabled={!code}
             title="Copy code"
@@ -975,9 +781,7 @@ export default function PartyClient({ code: initialCode }: { code?: string }) {
           <div />
           <input
             value={nickname}
-            onChange={(e) =>
-              setNickname(e.currentTarget.value.slice(0, 24))
-            }
+            onChange={(e) => setNickname(e.currentTarget.value.slice(0, 24))}
             placeholder="Your name"
             className="col-span-1 w-40 rounded-lg border border-neutral-200 bg-white px-2 py-1 text-sm text-neutral-900 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400 focus-visible:ring-offset-2 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
           />
@@ -1072,16 +876,13 @@ export default function PartyClient({ code: initialCode }: { code?: string }) {
                 <span
                   key={p.id}
                   className={[
-                    "inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[11px] font-medium",
-                    tone === "host"
-                      ? "border-orange-400 bg-orange-500 text-black shadow-sm"
-                      : tone === "self"
-                      ? "border-sky-400 bg-sky-500 text-black shadow-sm"
-                      : "border-neutral-200 bg-white/90 text-neutral-800 shadow-sm dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100",
+                    "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs",
+                    tone === "host" ? "bg-orange-500 text-black border-orange-400"
+                      : tone === "self" ? "bg-sky-500 text-black border-sky-400"
+                        : "bg-neutral-100 text-neutral-900 border-neutral-300 dark:bg-neutral-800 dark:text-neutral-100 dark:border-neutral-700"
                   ].join(" ")}
                 >
-                  {tone === "host" && <Crown className="h-3 w-3" />} {p.nickname}
-                  {p.id === memberId ? " (you)" : ""}
+                  {tone === "host" && <Crown className="h-3 w-3" />} {p.nickname}{p.id === memberId ? " (you)" : ""}
                 </span>
               );
             })}
@@ -1091,48 +892,17 @@ export default function PartyClient({ code: initialCode }: { code?: string }) {
           <div className="mb-3">
             <Ribbon>Categories</Ribbon>
             <div className="flex flex-wrap gap-2">
-              {(["breakfast", "lunch", "dinner", "dessert"] as const).map(
-                (k) => (
-                  <ToggleChip
-                    key={k}
-                    active={(cats as any)[k]}
-                    onClick={() =>
-                      setCats((c) => ({ ...c, [k]: !(c as any)[k] }))
-                    }
-                  >
-                    {k}
-                  </ToggleChip>
-                ),
-              )}
+              {(["breakfast", "lunch", "dinner", "dessert"] as const).map(k => (
+                <ToggleChip key={k} active={(cats as any)[k]} onClick={() => setCats(c => ({ ...c, [k]: !(c as any)[k] }))}>{k}</ToggleChip>
+              ))}
             </div>
           </div>
           <div className="mb-4">
             <Ribbon>Power-Ups</Ribbon>
             <div className="flex flex-wrap gap-2">
-              <ToggleChip
-                active={!!powerups.healthy}
-                onClick={() =>
-                  setPowerups((p) => ({ ...p, healthy: !p.healthy }))
-                }
-              >
-                Healthy
-              </ToggleChip>
-              <ToggleChip
-                active={!!powerups.cheap}
-                onClick={() =>
-                  setPowerups((p) => ({ ...p, cheap: !p.cheap }))
-                }
-              >
-                Cheap
-              </ToggleChip>
-              <ToggleChip
-                active={!!powerups.fast}
-                onClick={() =>
-                  setPowerups((p) => ({ ...p, fast: !p.fast }))
-                }
-              >
-                ≤30m
-              </ToggleChip>
+              <ToggleChip active={!!powerups.healthy} onClick={() => setPowerups(p => ({ ...p, healthy: !p.healthy }))}>Healthy</ToggleChip>
+              <ToggleChip active={!!powerups.cheap} onClick={() => setPowerups(p => ({ ...p, cheap: !p.cheap }))}>Cheap</ToggleChip>
+              <ToggleChip active={!!powerups.fast} onClick={() => setPowerups(p => ({ ...p, fast: !p.fast }))}>≤30m</ToggleChip>
             </div>
           </div>
 
@@ -1158,12 +928,7 @@ export default function PartyClient({ code: initialCode }: { code?: string }) {
               type="button"
               disabled={!memberId || isSpinning || !iAmHost}
               onClick={() => onGroupSpin()}
-              className={cn(
-                secondarySmallButtonBase,
-                !memberId || !iAmHost
-                  ? "cursor-not-allowed border-neutral-200 bg-neutral-100 text-neutral-400"
-                  : "border-neutral-200 bg-white text-neutral-800 hover:border-neutral-300 hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100",
-              )}
+              className="inline-flex items-center gap-1 rounded border border-neutral-300 bg-white px-3 py-1 text-sm hover:bg-neutral-50 disabled:opacity-50 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-800/80"
               title={iAmHost ? "Re-run spin" : "Host only"}
             >
               <RotateCcw className="h-4 w-4" /> Re-roll
@@ -1181,17 +946,8 @@ export default function PartyClient({ code: initialCode }: { code?: string }) {
           {/* Recent spins */}
           <div className="mt-4">
             <Ribbon>Recent spins</Ribbon>
-            <div className="space-y-1 text-xs text-neutral-600 dark:text-neutral-300">
-              {recent.length
-                ? recent.map((s, i) => (
-                    <div
-                      key={i}
-                      className="rounded-md bg-neutral-50 px-2 py-1 dark:bg-neutral-800/80"
-                    >
-                      {s}
-                    </div>
-                  ))
-                : "Host rebroadcasts latest result to newcomers."}
+            <div className="text-xs text-neutral-600 dark:text-neutral-300">
+              {recent.length ? recent.map((s, i) => <div key={i}>{s}</div>) : "Host rebroadcasts latest result to newcomers."}
             </div>
           </div>
         </Card>
@@ -1204,21 +960,10 @@ export default function PartyClient({ code: initialCode }: { code?: string }) {
             Diet
           </div>
           <div className="mb-3 flex flex-wrap gap-2">
-            {DietEnum.options.map((d) => (
-              <ToggleChip
-                key={d}
-                active={prefs.diet === d}
-                onClick={() => pushPrefs({ diet: d })}
-              >
-                {d}
-              </ToggleChip>
+            {DietEnum.options.map(d => (
+              <ToggleChip key={d} active={prefs.diet === d} onClick={() => pushPrefs({ diet: d })}>{d}</ToggleChip>
             ))}
-            <ToggleChip
-              active={!prefs.diet}
-              onClick={() => pushPrefs({ diet: undefined })}
-            >
-              none
-            </ToggleChip>
+            <ToggleChip active={!prefs.diet} onClick={() => pushPrefs({ diet: undefined })}>none</ToggleChip>
           </div>
 
           <div className="mb-1 text-xs font-semibold text-neutral-600 dark:text-neutral-300">
@@ -1228,17 +973,11 @@ export default function PartyClient({ code: initialCode }: { code?: string }) {
             {AllergenEnum.options.map((a) => {
               const active = (prefs.allergens ?? []).includes(a);
               return (
-                <ToggleChip
-                  key={a}
-                  active={active}
-                  onClick={() => {
-                    const set = new Set(prefs.allergens ?? []);
-                    active ? set.delete(a) : set.add(a);
-                    pushPrefs({ allergens: Array.from(set) });
-                  }}
-                >
-                  {a.replace("_", " ")}
-                </ToggleChip>
+                <ToggleChip key={a} active={active} onClick={() => {
+                  const set = new Set(prefs.allergens ?? []);
+                  active ? set.delete(a) : set.add(a);
+                  pushPrefs({ allergens: Array.from(set) });
+                }}>{a.replace("_", " ")}</ToggleChip>
               );
             })}
           </div>
@@ -1269,25 +1008,12 @@ export default function PartyClient({ code: initialCode }: { code?: string }) {
               ref={chatInputRef}
               className="flex-1 rounded-full border border-neutral-200 bg-white px-3 py-1.5 text-sm text-neutral-900 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400 focus-visible:ring-offset-2 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
               placeholder="Message…"
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  const v = (e.currentTarget as HTMLInputElement).value;
-                  (e.currentTarget as HTMLInputElement).value = "";
-                  sendChat(v);
-                }
-              }}
+              onKeyDown={(e) => { if (e.key === "Enter") { const v = (e.currentTarget as HTMLInputElement).value; (e.currentTarget as HTMLInputElement).value = ""; sendChat(v); } }}
             />
             <button
               type="button"
-              onClick={() => {
-                const v = chatInputRef.current?.value || "";
-                if (chatInputRef.current) chatInputRef.current.value = "";
-                sendChat(v);
-              }}
-              className={cn(
-                primarySmallButtonBase,
-                "border-neutral-200 bg-white text-neutral-800 hover:border-orange-300 hover:bg-orange-50 hover:text-orange-800 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100",
-              )}
+              onClick={() => { const v = chatInputRef.current?.value || ""; if (chatInputRef.current) chatInputRef.current.value = ""; sendChat(v); }}
+              className="rounded border border-neutral-300 bg-white px-3 py-1 text-sm hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-800/80"
             >
               Send
             </button>

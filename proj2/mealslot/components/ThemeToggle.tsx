@@ -20,7 +20,7 @@ export default function ThemeToggle() {
     document.documentElement.classList.toggle("dark", dark);
     try {
       localStorage.setItem("theme", dark ? "dark" : "light");
-    } catch {}
+    } catch { }
   };
 
   useEffect(() => {

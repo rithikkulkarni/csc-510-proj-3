@@ -1,84 +1,65 @@
-// --- path: app/(site)/party/page.tsx ---
 "use client";
 
-import { Suspense, useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import PartyClient from "@/components/PartyClient";
 
-// -------------------------
-// Shared visual tokens (match home page)
-// -------------------------
-const shellClass =
-  "min-h-screen bg-gradient-to-b from-neutral-50 via-slate-50 to-neutral-100 px-4 py-6 md:px-8 lg:px-16";
+import {
+  shellClass,
+  contentClass,
+  cardClass,
+  sectionTitleClass,
+  sectionSubtitleClass,
+} from "@/components/ui/style";
 
-const contentClass =
-  "mx-auto flex w-full max-w-5xl flex-col gap-5 pb-10";
-
-const cardClass =
-  "rounded-2xl border border-neutral-200/80 bg-white/80 backdrop-blur-sm p-4 shadow-sm transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-[0_18px_45px_rgba(15,23,42,0.08)]";
-
-function PartyPageInner() {
-  // Optional: support /party?code=ABC123 for quick join
+export default function PartyPage() {
   const sp = useSearchParams();
-  const code = useMemo(() => {
-    const raw = sp.get("code") ?? "";
-    return raw.toUpperCase().slice(0, 6);
-  }, [sp]);
+
+  // Read initial code from ?code=XYZ
+  const initialCode = useMemo(
+    () => (sp.get("code") ?? "").toUpperCase().slice(0, 6),
+    [sp]
+  );
+
+  // Local state — this is what the page displays
+  const [partyCode, setPartyCode] = useState(initialCode);
 
   return (
     <div className={shellClass}>
       <div className={contentClass}>
-        <header className="space-y-1">
-          <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-neutral-900">
-            Party Mode
-          </h1>
-          <p className="max-w-xl text-sm md:text-base text-neutral-600">
-            Spin together with friends in real time. Share a party code, lock in
-            favorites, and vote on what to eat.
-          </p>
+
+        {/* Header */}
+        <header className="flex flex-col md:flex-row md:justify-between md:items-center gap-3 mb-4">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-semibold text-neutral-900">
+              Party Mode
+            </h1>
+            <p className="text-sm md:text-base text-neutral-600">
+              Join friends, sync picks, and play MealSlot together.
+            </p>
+          </div>
         </header>
 
+        {/* Code Section */}
         <section className={cardClass}>
-          <div className="mb-3 flex items-center justify-between gap-3">
-            <h2 className="text-base md:text-lg font-semibold text-neutral-900">
-              Party lobby
-            </h2>
-            <span className="rounded-full bg-orange-50 px-3 py-1 text-[11px] font-medium text-orange-700">
-              Live group spin
+          <h2 className={sectionTitleClass}>Your Party Code</h2>
+          <p className={sectionSubtitleClass}>
+            Share this code with others to sync meal picks.
+          </p>
+
+          <div className="mt-4 p-4 rounded-xl border bg-neutral-50 flex items-center justify-center">
+            <span className="text-3xl font-bold tracking-widest text-neutral-900">
+              {partyCode || "------"}
             </span>
           </div>
 
-          {/* PartyClient handles Create/Join and shows the active code */}
-          <PartyClient code={code} />
+          <div className="mt-6">
+            {/* Pass callback so PartyClient can update header */}
+            <PartyClient code={partyCode} onCodeChange={setPartyCode} />
+          </div>
         </section>
+
       </div>
     </div>
-  );
-}
-
-export default function PartyPage() {
-  return (
-    <Suspense
-      fallback={
-        <div className={shellClass}>
-          <div className={contentClass}>
-            <header className="space-y-1">
-              <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-neutral-900">
-                Party Mode
-              </h1>
-              <p className="max-w-xl text-sm md:text-base text-neutral-600">
-                Loading your party lobby…
-              </p>
-            </header>
-
-            <section className={cardClass}>
-              <div className="h-40 animate-pulse rounded-xl bg-neutral-100" />
-            </section>
-          </div>
-        </div>
-      }
-    >
-      <PartyPageInner />
-    </Suspense>
   );
 }

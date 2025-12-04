@@ -44,6 +44,9 @@ export function SlotMachine({
     return out;
   }, [reelCount, selection]);
 
+  const selectionIds = (selection ?? []).map((d) => d.id).join("|");
+
+
   useEffect(() => {
     const next: Record<number, string> = {};
     dishesByIndex.forEach((d, i) => {
@@ -53,8 +56,8 @@ export function SlotMachine({
       }
     });
     setLocked(next);
-     
-  }, [selection && selection.map((d) => d.id).join("|")]);
+  }, [selectionIds]);
+
 
   const toggleLock = (i: number) => {
     setLocked((prev) => {
