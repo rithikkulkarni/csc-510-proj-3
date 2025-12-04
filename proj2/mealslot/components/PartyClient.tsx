@@ -128,16 +128,16 @@ export default function PartyClient({ code: initialCode, onCodeChange }: PartyCl
   const [recent, setRecent] = useState<string[]>([]);
 
   /** votes per slot (keep / reroll) */
-  const [votes, setVotes] = useState<[{ keep: Set<string>; reroll: Set<string> }, { keep: Set<string>; reroll: Set<string> }, { keep: Set<string>; reroll: Set<string> }]>([
+  const [votes, setVotes] = useState<[
+    { keep: Set<string>; reroll: Set<string> },
+    { keep: Set<string>; reroll: Set<string> },
+    { keep: Set<string>; reroll: Set<string> }
+  ]>([
     { keep: new Set(), reroll: new Set() },
     { keep: new Set(), reroll: new Set() },
     { keep: new Set(), reroll: new Set() },
   ]);
-  const resetVotes = () => setVotes([
-    { keep: new Set(), reroll: new Set() },
-    { keep: new Set(), reroll: new Set() },
-    { keep: new Set(), reroll: new Set() },
-  ]);
+
   const resetVotes = () =>
     setVotes([
       { keep: new Set(), reroll: new Set() },
