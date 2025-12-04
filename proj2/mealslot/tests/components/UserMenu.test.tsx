@@ -27,8 +27,8 @@ describe("UserMenu component", () => {
     fireEvent.click(screen.getByRole("button", { name: /Hi TestUser/i }));
 
     // Expect dropdown items to appear
-    expect(await screen.findByText("My Account")).toBeInTheDocument();
-    expect(screen.getByText("Saved Meals")).toBeInTheDocument();
+    expect(await screen.findByText("Account Setting")).toBeInTheDocument();
+    expect(screen.getByText("Favorites")).toBeInTheDocument();
     expect(screen.getByText("Dietary Preferences")).toBeInTheDocument();
   });
 
@@ -37,13 +37,13 @@ describe("UserMenu component", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /Hi Guest/i }));
 
-    expect(await screen.findByText("My Account")).toHaveAttribute(
+    expect(await screen.findByText("Account Setting")).toHaveAttribute(
       "href",
       "/handler/sign-up"
     );
-    expect(screen.getByText("Saved Meals")).toHaveAttribute(
+    expect(screen.getByText("Favorites")).toHaveAttribute(
       "href",
-      "/saved-meals"
+      "/favorites"
     );
     expect(screen.getByText("Dietary Preferences")).toHaveAttribute(
       "href",

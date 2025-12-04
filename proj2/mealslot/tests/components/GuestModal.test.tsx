@@ -1,4 +1,4 @@
-// tests/components/GuestModal.test.tsx
+// tests/components/GuestBanner.test.tsx
 import React from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
@@ -27,8 +27,8 @@ vi.mock("next/navigation", () => ({
 //     ) : null,
 // }));
 
-// 🔁 Adjust this import path to where GuestModal.tsx actually lives
-import GuestModal from "../../components/GuestModal";
+// 🔁 Adjust this import path to where GuestBanner.tsx actually lives
+import GuestBanner from "../../components/GuestBanner";
 
 beforeEach(() => {
   pushMock.mockReset();
@@ -36,9 +36,9 @@ beforeEach(() => {
   window.localStorage.clear();
 });
 
-describe("GuestModal", () => {
+describe("GuestBanner", () => {
   it("shows the modal on first visit and sets sessionStorage flag", async () => {
-    render(<GuestModal />);
+    render(<GuestBanner />);
 
     // Wait for the modal content to appear (effect runs after mount)
     const text = await screen.findByText(
@@ -47,13 +47,13 @@ describe("GuestModal", () => {
     expect(text).toBeInTheDocument();
 
     // Modal should mark that it has been shown
-    expect(window.sessionStorage.getItem("guestModalShown")).toBe("true");
+    expect(window.sessionStorage.getItem("GuestBannerShown")).toBe("true");
   });
 
   it("calls onGuest and sets guestUser when clicking 'Continue as Guest'", async () => {
     const onGuest = vi.fn();
 
-    render(<GuestModal onGuest={onGuest} />);
+    render(<GuestBanner onGuest={onGuest} />);
 
     const guestButton = await screen.findByRole("button", {
       name: /continue as guest/i,
@@ -69,7 +69,7 @@ describe("GuestModal", () => {
     // Spy on setTimeout so we can manually trigger the 300ms delayed callback
     const setTimeoutSpy = vi.spyOn(window, "setTimeout");
 
-    render(<GuestModal />);
+    render(<GuestBanner />);
 
     const signUpButton = await screen.findByRole("button", {
       name: /sign up/i,
@@ -97,7 +97,7 @@ describe("GuestModal", () => {
     const onGuest = vi.fn();
     const setTimeoutSpy = vi.spyOn(window, "setTimeout");
 
-    render(<GuestModal onGuest={onGuest} />);
+    render(<GuestBanner onGuest={onGuest} />);
 
     // Ensure the effect has run and the modal is visible
     await screen.findByText(
