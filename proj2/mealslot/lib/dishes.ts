@@ -111,10 +111,11 @@ export async function dishes(
   return filtered.map(toUIDish);
 }
 
+// Fetch all dishes from the DB (used by recipe route, etc.)
+export async function getAllDishes(): Promise<UIDish[]> {
+  const rows = await prisma.dish.findMany({
+    orderBy: [{ category: "asc" }, { name: "asc" }],
+  });
 
-
-// If you still need allDishes elsewhere, you can make a DB-backed version like:
-// export async function getAllDishes(): Promise<UIDish[]> {
-//   const rows = await prisma.dish.findMany();
-//   return rows.map(toUIDish);
-// }
+  return rows.map(toUIDish);
+}

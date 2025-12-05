@@ -4,7 +4,7 @@ export const runtime = "nodejs";
 import { NextRequest } from "next/server";
 import { z } from "zod";
 import { Dish, RecipeJSON, RecipeSchema } from "@/lib/schemas";
-import { allDishes } from "@/lib/dishes";
+import { getAllDishes } from "@/lib/dishes";
 import { recipesViaOpenAI } from "@/lib/llm";
 import { videoStubsFor } from "@/lib/youtube";
 
@@ -15,17 +15,29 @@ const Body = z.object({
 export async function POST(req: NextRequest) {
   const json = await req.json().catch(() => ({}));
   const parsed = Body.safeParse(json);
+
   if (!parsed.success) {
     return Response.json({ issues: parsed.error.issues }, { status: 400 });
   }
 
-  // Build a catalog from the static dish list
+  // Load the full dish catalog from the DB
+  const allDishes = await getAllDishes();
   const catalog = new Map(allDishes.map((d) => [d.id, d]));
 
   // Resolve the requested dish IDs to Dish objects
   const selectedDishes: Dish[] = parsed.data.dishIds
     .map((id) => catalog.get(id))
     .filter(Boolean) as Dish[];
+
+  if (selectedDishes.length === 0) {
+    return Response.json(
+      {
+        recipes: [] as RecipeJSON[],
+        message: "No dishes found for the requested IDs.",
+      },
+      { status: 200 },
+    );
+  }
 
   // Real LLM if key exists, otherwise deterministic stub (inside adapter)
   const recipes: RecipeJSON[] = await recipesViaOpenAI(
@@ -34,7 +46,9 @@ export async function POST(req: NextRequest) {
   );
 
   // Validate shape in dev
-  for (const r of recipes) RecipeSchema.parse(r);
+  for (const r of recipes) {
+    RecipeSchema.parse(r);
+  }
 
   return Response.json({ recipes });
 }
