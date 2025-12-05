@@ -1,7 +1,6 @@
-// --- path: components/DishCountInput.tsx ---
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { cn } from "./ui/cn";
 
 type DishCountInputProps = {
@@ -11,6 +10,11 @@ type DishCountInputProps = {
 
 export default function DishCountInput({ value, onChange }: DishCountInputProps) {
   const [input, setInput] = useState(value.toString());
+
+  // Keep local input text in sync with the parent value
+  useEffect(() => {
+    setInput(value.toString());
+  }, [value]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;

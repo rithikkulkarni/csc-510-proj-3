@@ -121,6 +121,8 @@ function dId(d: DishSeed) {
 // --------------------- MAIN ---------------------
 async function main() {
   console.log("Seeding dishes…");
+  
+  await prisma.dish.deleteMany(); // <- important reset
 
   const all: DishSeed[] = [
     ...asDishes("breakfast", BREAKFAST),

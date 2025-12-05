@@ -1,7 +1,6 @@
 "use client";
 
-import React from 'react';
-import { useEffect, useRef } from "react";
+import React, { useEffect, useRef } from "react";
 
 type ModalProps = {
   open: boolean;
@@ -29,7 +28,7 @@ export default function Modal({ open, title, onClose, children }: ModalProps) {
       if (e.key === "Tab" && dialogRef.current) {
         // rudimentary focus trap
         const focusables = dialogRef.current.querySelectorAll<HTMLElement>(
-          'a[href],button,textarea,input,select,[tabindex]:not([tabindex="-1"])'
+          'a[href],button,textarea,input,select,[tabindex]:not([tabindex="-1"])',
         );
         const first = focusables[0];
         const last = focusables[focusables.length - 1];
@@ -72,19 +71,41 @@ export default function Modal({ open, title, onClose, children }: ModalProps) {
           </h3>
           <button
             ref={firstFocusRef}
-            className="rounded-md border px-2 py-1 text-sm"
             onClick={onClose}
             aria-label="Close dialog"
+            className="
+              inline-flex items-center justify-center
+              rounded-full border border-neutral-200 bg-white
+              px-3 py-1.5 text-xs font-medium text-neutral-800
+              shadow-sm transition-all duration-150 ease-out
+              hover:-translate-y-0.5 hover:scale-[1.05]
+              hover:border-neutral-300 hover:bg-neutral-50
+              focus-visible:outline-none
+              focus-visible:ring-2 focus-visible:ring-orange-400
+              focus-visible:ring-offset-2 focus-visible:ring-offset-slate-50
+            "
           >
             Close
           </button>
         </div>
+
         <div className="max-h-[70vh] overflow-auto p-4">{children}</div>
-        <div className="border-t px-4 py-3">
+
+        <div className="border-t px-4 py-3 flex justify-end">
           <button
             ref={lastFocusRef}
-            className="rounded-md border px-3 py-1 text-sm"
             onClick={onClose}
+            className="
+              inline-flex items-center justify-center
+              rounded-full border border-transparent
+              bg-gradient-to-r from-orange-500 to-rose-500
+              px-4 py-1.5 text-xs font-medium text-white
+              shadow-sm transition-all duration-150 ease-out
+              hover:-translate-y-0.5 hover:scale-[1.05] hover:shadow-md
+              focus-visible:outline-none
+              focus-visible:ring-2 focus-visible:ring-orange-400
+              focus-visible:ring-offset-2 focus-visible:ring-offset-slate-50
+            "
           >
             Done
           </button>
