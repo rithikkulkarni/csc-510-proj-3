@@ -105,7 +105,7 @@ export default function PartyClient({
   const [cats, setCats] = useState<{ breakfast: boolean; lunch: boolean; dinner: boolean; dessert: boolean }>({
     breakfast: false, lunch: false, dinner: true, dessert: false
   });
-  const [powerups, setPowerups] = useState<{ healthy?: boolean; cheap?: boolean; fast?: boolean }>({});
+  const [powerups, setPowerups] = useState<{ healthy?: boolean; cheap?: boolean; max30m?: boolean }>({});
 
   /** spin state */
   const [isSpinning, setIsSpinning] = useState(false);
@@ -626,7 +626,7 @@ export default function PartyClient({
         isSpinning={isSpinning}
         powerups={powerups}
         onPowerupToggle={(key: string) => {
-          if (key === "healthy" || key === "cheap" || key === "fast") {
+          if (key === "healthy" || key === "cheap" || key === "max30m") {
             setPowerups(p => ({ ...p, [key]: !p[key] }));
           }
         }}
