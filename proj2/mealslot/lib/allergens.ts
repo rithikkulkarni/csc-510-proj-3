@@ -13,7 +13,7 @@ export function normalizeAllergens(input: string | string[] | null | undefined):
     const push = (s: string) => {
         let v = (s ?? "")
             .toString()
-            .replace(/[\{\}\[\]"']/g, '') // Remove brackets and quotes
+            .replace(/[{}[\]"']/g, '') // Remove brackets and quotes
             .trim()
             .toLowerCase();
         if (!v) return;

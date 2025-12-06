@@ -39,8 +39,8 @@ export async function GET(req: NextRequest) {
         };
 
         const normalizeAllergen = (str: string): string => {
-            let normalized = str
-                .replace(/[\{\}\[\]"']/g, '') // Remove brackets and quotes
+            const normalized = str
+                .replace(/[{}[\]"']/g, '') // Remove brackets and quotes
                 .trim()
                 .toLowerCase();
 
@@ -63,7 +63,8 @@ export async function GET(req: NextRequest) {
             items.forEach(item => {
                 if (!item) return;
                 const normalized = normalizeAllergen(item);
-                if (normalized) {
+                // Filter out invalid entries like "[object object]" or "object"
+                if (normalized && !normalized.includes('object')) {
                     allergenSet.add(normalized);
                 }
             });

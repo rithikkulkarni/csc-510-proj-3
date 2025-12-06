@@ -6,6 +6,8 @@ import { stackServerApp } from "@/stack/server"; // or "../stack/server" if not 
 import HeaderServer from "@/components/HeaderServer";
 import { UserProvider } from "./context/UserContext";
 
+export const dynamic = 'force-dynamic';
+
 export const metadata = {
   title: "MealSlot",
   description: "Spin for meals that fit your mood",
