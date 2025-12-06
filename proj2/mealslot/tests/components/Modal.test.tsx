@@ -2,7 +2,7 @@
 import React from "react";
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
-import Modal from "@/components/ui/Modal";
+import Modal from "../../components/ui/Modal";
 
 /**
  * Unit tests for Modal

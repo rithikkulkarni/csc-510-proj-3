@@ -1,121 +1,200 @@
 /* --- path: app/globals.css --- */
+@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap");
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Light & dark tokens on <html> via next-themes */
 :root {
-  --bg: 255 255 255;  /* white */
-  --fg: 17 24 39;     /* slate-900-ish */
-  --card: 255 255 255;
-  --card-border: 229 231 235; /* neutral-200 */
+  /* Light theme matches the header/card tone (no gradients) */
+  --bg: 248 252 253;
+  --bg-2: 240 248 251;
+  --fg: 20 36 44;
+  --muted: 78 104 118;
+  --card: 248 252 253;
+  --card-border: 205 220 228;
+  --accent: 229 98 58;
+  --accent-2: 241 192 79;
+  --glow: 31 109 130;
+  --shadow: 0 18px 42px rgba(15, 28, 36, 0.12);
 }
 
 .dark {
-  --bg: 10 10 10;       /* deep neutral */
-  --fg: 243 244 246;    /* slate-100-ish */
-  --card: 23 23 23;     /* neutral-900 */
-  --card-border: 38 38 38; /* neutral-800 */
+  --bg: 10 18 24;
+  --bg-2: 14 34 44;
+  --fg: 232 241 245;
+  --muted: 152 170 178;
+  --card: 20 52 66;
+  --card-border: 38 92 112;
+  --accent: 241 192 79;
+  --accent-2: 229 98 58;
+  --glow: 107 230 193;
+  --shadow: 0 18px 42px rgba(0, 0, 0, 0.32);
 }
 
-html, body {
+html,
+body {
+  min-height: 100vh;
   background-color: rgb(var(--bg));
+  background-image: none;
+  color: rgb(var(--fg));
+  font-family: "Inter", "system-ui", sans-serif;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+* {
+  scroll-behavior: smooth;
+}
+
+a {
+  color: rgb(var(--glow));
+}
+
+@layer base {
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: "Space Grotesk", "Inter", "system-ui", sans-serif;
+    letter-spacing: -0.01em;
+    color: rgb(var(--fg));
+  }
+
+  p,
+  span,
+  li {
+    color: rgb(var(--muted));
+  }
+
+  strong {
+    color: rgb(var(--fg));
+  }
+
+  ::selection {
+    background: rgba(var(--accent), 0.22);
+    color: rgb(var(--fg));
+  }
+}
+
+/* Card surface used project-wide */
+.card {
+  @apply rounded-3xl border p-6 backdrop-blur;
+  background-color: rgb(var(--card));
+  border-color: rgba(var(--card-border), 0.7);
+  box-shadow: var(--shadow);
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(var(--accent-2), 0.55);
+  box-shadow: 0 22px 48px rgba(0, 0, 0, 0.22);
+}
+
+/* Pills / chips */
+@layer components {
+  .pill {
+    @apply inline-flex items-center gap-1 rounded-full border px-4 py-2 text-sm font-medium transition;
+    background: rgba(var(--card), 0.72);
+    border-color: rgba(var(--card-border), 0.8);
+    color: rgb(var(--fg));
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.18);
+  }
+
+  .pill[data-selected="true"] {
+    background: linear-gradient(120deg, #E5623A, #F1C04F);
+    color: #0F1C24;
+    border-color: transparent;
+    box-shadow: 0 10px 26px rgba(229, 98, 58, 0.3);
+  }
+}
+
+/* Buttons */
+.btn-primary {
+  @apply inline-flex items-center justify-center rounded-full border-2 px-5 py-2 font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2;
+  background: linear-gradient(120deg, #E5623A, #F1C04F);
+  color: #0F1C24;
+  border-color: #F1C04F;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
+}
+
+.btn-primary:hover {
+  transform: translateY(-1px) scale(1.02);
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.45);
+}
+
+.btn-ghost {
+  @apply inline-flex items-center justify-center rounded-full border px-4 py-2 font-medium transition;
+  background-color: rgba(var(--card), 0.55);
+  border-color: rgba(var(--card-border), 0.8);
   color: rgb(var(--fg));
 }
 
-/* Handy utility classes for your cards/sections */
-.card {
-  @apply rounded-2xl border p-6;
-  background-color: rgb(var(--card));
-  border-color: rgb(var(--card-border));
+.btn-ghost:hover {
+  border-color: rgba(var(--accent-2), 0.65);
+  color: rgb(var(--fg));
+  transform: translateY(-1px);
 }
-/* ==== DARK-MODE RESCUE SHIM (quick global fix) ==== */
+
+/* Inputs */
+input,
+select,
+textarea {
+  background-color: rgba(var(--card), 0.65);
+  border: 1px solid rgba(var(--card-border), 0.9);
+  color: rgb(var(--fg));
+  border-radius: 14px;
+  padding: 10px 12px;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: rgba(var(--accent-2), 0.9);
+  box-shadow: 0 0 0 3px rgba(var(--accent), 0.25);
+}
+
+::placeholder {
+  color: rgba(var(--muted), 0.75);
+}
+
+/* Rescue legacy white surfaces to match theme */
 @layer base {
-  /* Any panel still using bg-white becomes a dark surface */
-  .dark .bg-white { background-color: rgb(23 23 23) !important; }        /* neutral-900 */
-  .dark .border-neutral-200, 
-  .dark .border-gray-200 { border-color: rgb(38 38 38) !important; }     /* neutral-800 */
 
-  /* Text utilities that force black become light in dark mode */
-  .dark .text-black { color: rgb(243 244 246) !important; }              /* slate-100 */
-  .dark .text-gray-700, .dark .text-neutral-700 { color: rgb(229 231 235) !important; }
-  .dark .text-gray-500, .dark .text-neutral-500 { color: rgb(212 212 212) !important; }
-
-  /* Inputs / selects / textareas */
-  .dark input, 
-  .dark select, 
-  .dark textarea {
-    background-color: rgb(38 38 38) !important;   /* neutral-800 */
-    color: rgb(243 244 246) !important;
-    border-color: rgb(64 64 64) !important;       /* neutral-700 */
+  .bg-white,
+  .bg-gray-50,
+  .bg-neutral-50 {
+    background-color: rgba(var(--card), 0.92) !important;
+    color: rgb(var(--fg));
   }
-  .dark input:disabled, .dark select:disabled, .dark textarea:disabled {
-    background-color: rgb(64 64 64) !important;   /* neutral-700 */
-    color: rgb(212 212 212) !important;
+
+  .border-gray-200,
+  .border-neutral-200,
+  .border-slate-200 {
+    border-color: rgba(var(--card-border), 0.7) !important;
   }
-  .dark ::placeholder { color: rgb(163 163 163) !important; }
 
-  /* Details/summary accordions (your Filters sections) */
-  .dark details > summary { color: rgb(229 231 235) !important; }
-
-  /* Buttons that inherit text color will stay readable */
-  .dark button { color: inherit; }
-}
-/* ==== DARK MODE VISIBILITY FIXES ==== */
-@layer base {
-  /* Any surfaces left as white now become dark surfaces */
-  .dark .bg-white { background-color: rgb(23 23 23) !important; }
-  .dark .border-neutral-200, .dark .border-gray-200 { border-color: rgb(38 38 38) !important; }
-
-  /* Selected pills that used bg-black become orange in dark to keep contrast */
-  .dark .bg-black { background-color: rgb(249 115 22) !important; }           /* orange-500 */
-  .dark .hover\:bg-black:hover { background-color: rgb(234 88 12) !important; } /* orange-600 */
-  .dark .border-black { border-color: rgb(251 146 60) !important; }           /* orange-400 */
-
-  /* Generic chip/badge readability */
-  .dark .text-gray-700, .dark .text-neutral-700 { color: rgb(229 231 235) !important; }
-  .dark .text-gray-500, .dark .text-neutral-500 { color: rgb(212 212 212) !important; }
-
-  /* Inputs */
-  .dark input, .dark select, .dark textarea {
-    background-color: rgb(38 38 38) !important;  /* neutral-800 */
-    color: rgb(243 244 246) !important;
-    border-color: rgb(64 64 64) !important;
+  .text-black,
+  .text-gray-900,
+  .text-neutral-900 {
+    color: rgb(var(--fg)) !important;
   }
-  .dark ::placeholder { color: rgb(163 163 163) !important; }
-}
-@layer components {
-  .pill {
-    @apply rounded-full border px-3 py-1 text-sm transition;
+
+  .text-gray-700,
+  .text-neutral-700,
+  .text-gray-500,
+  .text-neutral-500 {
+    color: rgba(var(--muted), 0.9) !important;
   }
-  .pill[data-selected="true"] {
-    @apply bg-black text-white dark:bg-orange-500 dark:text-black dark:border-orange-400;
+
+  .bg-black {
+    background-color: #E5623A !important;
+  }
+
+  .hover\:bg-black:hover {
+    background-color: #d8562f !important;
   }
 }
-/* ==== DARK MODE BUTTON VISIBILITY ==== */
-@layer base {
-  /* generic buttons */
-  .dark button {
-    background-color: rgb(38 38 38);   /* neutral-800 */
-    color: rgb(243 244 246);           /* slate-100 */
-    border: 1px solid rgb(64 64 64);   /* neutral-700 */
-  }
-  .dark button:hover:not(:disabled) {
-    background-color: rgb(64 64 64);   /* neutral-700 */
-  }
-
-  /* disabled state should still be legible */
-  .dark button:disabled {
-    background-color: rgb(64 64 64) !important;  /* neutral-700 */
-    color: rgb(212 212 212) !important;          /* neutral-300 */
-    opacity: 1 !important;                       /* override low-opacity libs */
-    cursor: not-allowed;
-  }
-
-  /* if the button uses utility colors, keep them readable */
-  .dark .bg-gray-100 { background-color: rgb(64 64 64) !important; }
-  .dark .text-gray-400 { color: rgb(212 212 212) !important; }
-  .dark .ring-gray-200 { --tw-ring-color: rgb(64 64 64) !important; }
-}
-
-

@@ -6,8 +6,8 @@ import { describe, it, expect, vi } from "vitest";
 vi.mock("server-only", () => ({}));
 
 // Adjust these imports to match your project structure if needed
-import { recipesViaOpenAI } from "@/lib/llm";
-import type { Dish } from "@/lib/schemas";
+import { recipesViaOpenAI } from "../../lib/llm";
+import type { Dish } from "../../lib/schemas";
 
 type Yt = { id: string; title: string; url: string; thumbnail?: string };
 

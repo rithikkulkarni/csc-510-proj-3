@@ -2,17 +2,25 @@
 
 import dynamic from "next/dynamic";
 import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
 import { SlotMachine } from "@/components/SlotMachine";
 import { PowerUps } from "@/components/PowerUps";
 import FilterMenu from "@/components/FilterMenu";
-import DishCountInput from "@/components/DishCountInput";
+
 import { Dish, PowerUpsInput, RecipeJSON } from "@/lib/schemas";
 import { cn } from "@/components/ui/cn";
 import Modal from "@/components/ui/Modal";
 import MapWithPins from "@/components/MapWithPins";
 import VideoPanel, { Video } from "@/components/VideoPanel";
-import GuestModal from "@/components/GuestModal";
+import { getUserDetails, getAllAllergens, updateUserDetails } from "../actions";
+import {
+  shellClass,
+  contentClass,
+  cardClass,
+  sectionTitleClass,
+  sectionSubtitleClass,
+  categoryPillBase,
+} from "../../components/ui/style";
+import { client } from "@/stack/client";
 
 // -------------------------
 // Types
@@ -27,91 +35,121 @@ type Venue = {
   cuisine: string;
   distance_km: number;
 };
-
 type User = {
   name: string;
+  id?: string;
+  auth_id?: string | null;
+  allergens?: string[];
+  savedMeals?: string[];
 };
 
 // -------------------------
-// User Menu Component
-// -------------------------
-function UserMenu({ user, onSignOut }: { user: User; onSignOut: () => void }) {
-  const [open, setOpen] = useState(false);
-  const router = useRouter();
-
-  return (
-    <div className="relative inline-block text-left mb-4">
-      <button
-        onClick={() => setOpen(!open)}
-        className="flex items-center gap-2 rounded-full border px-4 py-2 hover:bg-gray-100 transition"
-      >
-        Hi, {user?.name} ▾
-      </button>
-
-      {open && (
-        <div className="absolute right-0 mt-2 w-48 origin-top-right rounded-md border bg-white shadow-lg z-50">
-          <ul className="flex flex-col text-sm">
-            <li>
-              <button
-                className="w-full px-4 py-2 text-left hover:bg-gray-100"
-                onClick={() => router.push("/handler/account")}
-              >
-                My Account
-              </button>
-            </li>
-            <li>
-              <button
-                className="w-full px-4 py-2 text-left hover:bg-gray-100"
-                onClick={() => router.push("/handler/saved-meals")}
-              >
-                Saved Meals
-              </button>
-            </li>
-            <li>
-              <button
-                className="w-full px-4 py-2 text-left hover:bg-gray-100"
-                onClick={() => router.push("/handler/preferences")}
-              >
-                Dietary Preferences
-              </button>
-            </li>
-            <li>
-              <button
-                className="w-full px-4 py-2 text-left hover:bg-gray-100 text-red-600"
-                onClick={onSignOut}
-              >
-                Sign Out
-              </button>
-            </li>
-          </ul>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// -------------------------
-// Home Page
+// HomePage
 // -------------------------
 function HomePage() {
   const [user, setUser] = useState<User | null>(null);
-
-  const [category, setCategory] = useState<string>("Breakfast");
-  const [dishCount, setDishCount] = useState(0);
+  const DISH_COUNT = 3; // Fixed at 3 for actual slot machine behavior
+  const [slotCategories, setSlotCategories] = useState<string[]>(["Breakfast", "Lunch", "Dinner"]);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [selectedAllergens, setSelectedAllergens] = useState<string[]>([]);
+  const [savedMeals, setSavedMeals] = useState<string[]>([]);
+  const [allCategories] = useState<string[]>(["Breakfast", "Lunch", "Dinner", "Dessert", "Snack"]);
   const [powerups, setPowerups] = useState<PowerUpsInput>({});
   const [selection, setSelection] = useState<Dish[]>([]);
   const [busy, setBusy] = useState(false);
   const [cooldownMs, setCooldownMs] = useState(0);
-
   const [recipes, setRecipes] = useState<RecipeJSON[] | null>(null);
   const [venues, setVenues] = useState<Venue[] | null>(null);
   const [openVideoModal, setOpenVideoModal] = useState(false);
   const [videosByDish, setVideosByDish] = useState<Record<string, Video[]>>({});
 
   // -------------------------
-  // Cuisines
+  // Load user (Neon Auth or Guest)
+  // -------------------------
+  useEffect(() => {
+    async function fetchUser() {
+      const savedProfile = localStorage.getItem('userProfile');
+      if (savedProfile) {
+        const parsed = JSON.parse(savedProfile);
+        setUser(parsed);
+        setSelectedAllergens(Array.isArray(parsed?.allergens) ? parsed.allergens : []);
+        setSavedMeals(Array.isArray(parsed?.savedMeals) ? parsed.savedMeals : []);
+        return;
+      }
+
+
+      const neonUser = await client.getUser();
+      if (neonUser) {
+        const profile = await getUserDetails(neonUser.id);
+        if (profile) {
+          setUser(profile);
+          setSelectedAllergens(Array.isArray(profile.allergens) ? profile.allergens : []);
+          setSavedMeals(Array.isArray(profile.savedMeals) ? profile.savedMeals : []);
+          localStorage.setItem("userProfile", JSON.stringify(profile));
+        }
+
+      } else if (localStorage.getItem('guestUser')) {
+        setUser({ name: 'Guest' });
+      }
+    }
+
+    fetchUser();
+  }, []);
+
+  const handleGuest = () => {
+    localStorage.setItem("guestUser", "true");
+    setUser({ name: "Guest" });
+  };
+
+  const handleSignOut = () => {
+    localStorage.removeItem("guestUser");
+    localStorage.removeItem("userProfile"); // clear Neon Auth profile
+    setUser(null);
+  };
+
+  const toggleSavedMeal = async (dish: Dish) => {
+    const next = (() => {
+      if (savedMeals.includes(dish.id)) {
+        return savedMeals.filter((id) => id !== dish.id);
+      }
+      return [...savedMeals, dish.id];
+    })();
+
+    // Optimistic update
+    setSavedMeals(next);
+    localStorage.setItem("savedMeals", JSON.stringify(next));
+
+    // Keep cached profile in sync if it exists
+    const cached = localStorage.getItem("userProfile");
+    if (cached) {
+      try {
+        const parsed = JSON.parse(cached);
+        parsed.savedMeals = next;
+        localStorage.setItem("userProfile", JSON.stringify(parsed));
+      } catch (e) {
+        console.warn("Failed to sync saved meals to cached profile", e);
+      }
+    }
+
+    // Persist to DB for authenticated users
+    const authId = (user as any)?.auth_id || (user as any)?.id;
+    if (authId) {
+      try {
+        const updated = await updateUserDetails(authId, { savedMeals: next });
+        if (updated?.savedMeals) {
+          setSavedMeals(updated.savedMeals);
+          setUser((prev) => (prev ? { ...prev, savedMeals: updated.savedMeals } : prev));
+          localStorage.setItem("userProfile", JSON.stringify({ ...(cached ? JSON.parse(cached) : {}), savedMeals: updated.savedMeals }));
+        }
+      } catch (err) {
+        console.error("Failed to persist saved meals", err);
+      }
+    }
+  };
+
+
+  // -------------------------
+  // Derived cuisines
   // -------------------------
   const cuisines = useMemo(() => {
     const names = selection.map((d) => d.name).filter(Boolean);
@@ -126,61 +164,67 @@ function HomePage() {
     if (cooldownMs > 0) {
       t = window.setInterval(() => setCooldownMs((ms) => Math.max(0, ms - 250)), 250);
     }
-    return () => (t ? clearInterval(t) : undefined);
+    return () => {
+      if (t) clearInterval(t);
+    };
   }, [cooldownMs]);
 
   // -------------------------
-  // Spin slot machine
+  // Slot machine spin & other logic
   // -------------------------
+  const dedupeSelection = (items: Dish[]) => {
+    const seen = new Set<string>();
+    return items.filter((d) => {
+      const key = d?.id || `${d?.name}-${d?.category}`;
+      if (!key || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  };
+
   const onSpin = async (locked: { index: number; dishId: string }[]) => {
     setBusy(true);
     const res = await fetch("/api/spin", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ category, tags: selectedTags, allergens: selectedAllergens, locked, powerups, dishCount }),
+      body: JSON.stringify({
+        categories: slotCategories, // array of categories per slot
+        tags: selectedTags,
+        allergens: selectedAllergens,
+        locked,
+        powerups,
+        dishCount: DISH_COUNT,
+      }),
     });
     setBusy(false);
-
     if (!res.ok) {
       const j = await res.json().catch(() => ({}));
       alert(`Spin failed: ${j.message ?? res.status}`);
       return;
     }
-
     const data = await res.json();
-    setSelection(data.selection);
+    const uniqueSelection = dedupeSelection(data.selection ?? []);
+    setSelection(uniqueSelection);
     setRecipes(null);
     setVenues(null);
     setOpenVideoModal(false);
     setCooldownMs(3000);
-
-    await fetchVideos(data.selection);
+    await fetchVideos(uniqueSelection);
   };
 
-  // -------------------------
-  // Fetch Videos
-  // -------------------------
+  // Fetch videos
   const fetchVideos = async (dishes: Dish[]) => {
     if (!dishes.length) return;
-    const dishNames = dishes.map((d) => d.name);
-
     const res = await fetch("/api/videos", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ dishes: dishNames }),
+      body: JSON.stringify({ dishes: dishes.map((d) => d.name) }),
     });
-
     const data = await res.json();
-    if (res.ok) {
-      setVideosByDish(data.results);
-    } else {
-      console.error("Failed to fetch videos", data);
-    }
+    if (res.ok) setVideosByDish(data.results);
   };
 
-  // -------------------------
-  // Fetch Venues
-  // -------------------------
+  // Fetch venues
   const fetchVenues = async (coords?: { lat: number; lng: number }) => {
     const body: any = { cuisines };
     if (coords) {
@@ -205,114 +249,243 @@ function HomePage() {
   };
 
   // -------------------------
-  // Sign out handler
+  // JSX
   // -------------------------
-  const handleSignOut = () => {
-    localStorage.removeItem("guestUser");
-    setUser(null);
-  };
-
   return (
-    <div className="space-y-4">
-      {/* ✅ Guest modal */}
-      <GuestModal onGuest={() => setUser({ name: "Guest" })} />
+    <div className={shellClass}>
+      <div className={contentClass}>
+        <header className={cn(cardClass, "flex flex-col gap-3")}
+        >
+          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-brand-dusk/80 dark:text-brand-glow/90">
+            <span className="rounded-full bg-gradient-to-r from-brand-coral to-brand-gold px-2 py-1 text-brand-dusk shadow-soft">Solo</span>
+            <span>Spin &amp; Savor</span>
+          </div>
+          <div className="space-y-2">
+            <h1 className="text-3xl md:text-4xl font-semibold text-brand-dusk dark:text-white">
+              What should we eat today?
+            </h1>
+            <p className="text-sm md:text-base text-brand-dusk/80 dark:text-brand-glow/80">
+              Spin the reels, lock your favorites, and let MealSlot pick your next bite—cook at home or find a spot nearby.
+            </p>
+          </div>
+        </header>
 
-      {/* ✅ User Menu */}
-      {user && <UserMenu user={user} onSignOut={handleSignOut} />}
-
-      {/* Category selection */}
-      <section className="rounded-2xl border bg-white p-4 shadow-sm">
-        <h2 className="mb-2 text-lg font-semibold">Choose Category</h2>
-        <div className="flex flex-wrap gap-2">
-          {["Breakfast", "Lunch", "Dinner", "Dessert"].map((c) => {
-            const active = category === c.toLowerCase();
-            return (
-              <button
-                key={c.toLowerCase()}
-                className={cn("rounded-full border px-3 py-1 text-sm", active ? "bg-neutral-900 text-white" : "bg-white")}
-                onClick={() => setCategory((prev) => (prev === c.toLowerCase() ? "" : c.toLowerCase()))}
-                aria-pressed={active}
-              >
-                {c}
-              </button>
-            );
-          })}
-        </div>
-      </section>
-
-      <FilterMenu onTagChange={setSelectedTags} onAllergenChange={setSelectedAllergens} />
-      <PowerUps value={powerups} onChange={setPowerups} />
-      <DishCountInput value={dishCount} onChange={setDishCount} />
-
-      <SlotMachine reelCount={dishCount} onSpin={onSpin} cooldownMs={cooldownMs} busy={busy} selection={selection} />
-
-      {selection.length > 0 && (
-        <section className="rounded-2xl border bg-white p-4 shadow-sm">
-          <h2 className="mb-2 text-lg font-semibold">Selected Dishes</h2>
-          <ul className="list-disc pl-6">
-            {selection.map((d) => (
-              <li key={d.id}>
-                <span className="font-medium">{d.name}</span>{" "}
-                <span className="text-xs">({d.category})</span>
-              </li>
-            ))}
-          </ul>
-          <div className="mt-4 flex gap-2">
-            <button className="underline" onClick={() => setOpenVideoModal(true)}>
-              Cook at Home
+        {/* Category selection - now handled per-slot */}
+        <section className={cardClass}>
+          <div className="flex items-center justify-between gap-3">
+            <h2 className={sectionTitleClass}>Categories</h2>
+            <span className="rounded-full bg-gradient-to-r from-brand-coral to-brand-gold px-3 py-1 text-xs font-semibold text-brand-dusk shadow-soft">
+              Step 1 · Customize each slot
+            </span>
+          </div>
+          <p className="mt-2 text-sm text-brand-dusk/70 dark:text-brand-glow/80">
+            Pick a category for each slot above the reels below, or use the quick presets:
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button
+              className={cn(categoryPillBase, "text-brand-dusk hover:border-brand-gold/80 dark:text-white/80")}
+              onClick={() => setSlotCategories(["Breakfast", "Lunch", "Dinner"])}
+            >
+              🍳 Full Day
             </button>
             <button
-              className="underline"
-              onClick={() => {
-                if ("geolocation" in navigator) {
-                  navigator.geolocation.getCurrentPosition(
-                    (pos) => fetchVenues({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-                    () => fetchVenues(),
-                    { maximumAge: 1000 * 60 * 5, timeout: 10000 }
-                  );
-                } else {
-                  fetchVenues();
-                }
-              }}
+              className={cn(categoryPillBase, "text-brand-dusk hover:border-brand-gold/80 dark:text-white/80")}
+              onClick={() => setSlotCategories(["Dinner", "Dinner", "Dessert"])}
             >
-              Eat Outside
+              🍽️ Dinner + Dessert
+            </button>
+            <button
+              className={cn(categoryPillBase, "text-brand-dusk hover:border-brand-gold/80 dark:text-white/80")}
+              onClick={() => setSlotCategories(["Lunch", "Lunch", "Lunch"])}
+            >
+              🥗 All Lunch
+            </button>
+            <button
+              className={cn(categoryPillBase, "text-brand-dusk hover:border-brand-gold/80 dark:text-white/80")}
+              onClick={() => setSlotCategories(["Dessert", "Dessert", "Dessert"])}
+            >
+              🍰 All Desserts
+            </button>
+            <button
+              className={cn(categoryPillBase, "text-brand-dusk hover:border-brand-gold/80 dark:text-white/80")}
+              onClick={() => setSlotCategories(["Snack", "Snack", "Snack"])}
+            >
+              🍿 All Snacks
             </button>
           </div>
         </section>
-      )}
 
-      <Modal open={openVideoModal && !!videosByDish} title="Cook at Home — Recipes" onClose={() => setOpenVideoModal(false)}>
-        <VideoPanel videosByDish={videosByDish} />
-      </Modal>
+        {/* Filters / power-ups */}
+        <section className={cardClass}>
+          <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+            <div className="w-full md:w-2/3 space-y-4">
+              <h2 className={sectionTitleClass}>Filters</h2>
+              <FilterMenu
+                onTagChange={setSelectedTags}
+                onAllergenChange={setSelectedAllergens}
+              />
+            </div>
+            <div className="w-full md:w-1/3 space-y-4 border-t border-dashed border-neutral-200 pt-4 md:border-l md:border-t-0 md:pl-4">
+              <h3 className="text-sm font-semibold text-brand-dusk dark:text-white">Power-Ups</h3>
+              <p className={sectionSubtitleClass}>
+                Give the slot machine a nudge: healthier options, cheaper picks, or faster meals.
+              </p>
+              <PowerUps value={powerups} onChange={setPowerups} />
+            </div>
+          </div>
+        </section>
 
-      <section id="outside" className="rounded-2xl border bg-white p-4 shadow-sm">
-        <h2 className="mb-2 text-lg font-semibold">Eat Outside</h2>
-        <p className="text-sm text-neutral-600">Shows stubbed venues; “Using city-level location.”</p>
-        {venues && (
-          <>
-            <div className="mt-3 grid gap-3 md:grid-cols-2" aria-label="Venue list">
-              {venues.map((v) => (
-                <div key={v.id} className="rounded-xl border p-3">
-                  <div className="mb-1 text-base font-semibold">{v.name}</div>
-                  <div className="text-xs text-neutral-600">
-                    {v.cuisine} • {v.price} • {v.rating.toFixed(1)}★ • {v.distance_km} km
-                  </div>
-                  <div className="text-xs">{v.addr}</div>
-                  <a className="mt-2 inline-block text-xs underline" href={v.url} target="_blank" rel="noreferrer">
-                    Visit website
-                  </a>
+        {/* Slot Machine */}
+        <section className={cardClass}>
+          <div className="flex flex-col gap-4">
+            <div className="space-y-3">
+              <h2 className={sectionTitleClass}>Spin the Slots</h2>
+              <p className={sectionSubtitleClass}>
+                Lock your favorites and spin again to explore more options.
+              </p>
+            </div>
+            <SlotMachine
+              reelCount={DISH_COUNT}
+              onSpin={onSpin}
+              cooldownMs={cooldownMs}
+              busy={busy}
+              hasCategory={true}
+              savedMeals={savedMeals}
+              onToggleSave={toggleSavedMeal}
+              selection={selection}
+              slotCategories={slotCategories}
+              onCategoryChange={(index, cat) => {
+                const next = [...slotCategories];
+                next[index] = cat;
+                setSlotCategories(next);
+              }}
+            />
+          </div>
+        </section>
+
+        {/* Selected dishes + actions */}
+        {
+          selection.length > 0 && (
+            <section
+              className={cn(
+                cardClass,
+                "animate-[fadeInUp_180ms_ease-out]",
+              )}
+            >
+              <h2 className={sectionTitleClass}>Selected Dishes</h2>
+              <ul className="mt-2 space-y-1.5 text-sm text-brand-dusk/90 dark:text-brand-glow/90">
+                {selection.map((d) => (
+                  <li key={d.id} className="flex items-baseline gap-2">
+                    <span className="inline-block h-1.5 w-1.5 rounded-full bg-gradient-to-r from-orange-500 to-rose-500" />
+                    <div>
+                      <span className="font-semibold text-brand-dusk dark:text-white">
+                        {d.name}
+                      </span>{" "}
+                      <span className="text-xs uppercase tracking-wide text-brand-dusk/60 dark:text-brand-glow/70">
+                        ({d.category})
+                      </span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+              <div className="mt-4 flex flex-wrap gap-3">
+                <button
+                  className="btn-primary text-xs px-4 py-2"
+                  onClick={() => setOpenVideoModal(true)}
+                >
+                  🍳 Cook at Home
+                </button>
+                <button
+                  className="btn-ghost text-xs px-4 py-2"
+                  onClick={() => {
+                    if ("geolocation" in navigator) {
+                      navigator.geolocation.getCurrentPosition(
+                        (pos) =>
+                          fetchVenues({
+                            lat: pos.coords.latitude,
+                            lng: pos.coords.longitude,
+                          }),
+                        () => fetchVenues(),
+                        { maximumAge: 1000 * 60 * 5, timeout: 10000 },
+                      );
+                    } else {
+                      fetchVenues();
+                    }
+                  }}
+                >
+                  📍 Eat Outside
+                </button>
+              </div>
+            </section>
+          )
+        }
+
+        {/* Recipes modal */}
+        <Modal
+          open={openVideoModal && !!videosByDish}
+          title="Cook at Home — Recipes"
+          onClose={() => setOpenVideoModal(false)}
+        >
+          <VideoPanel videosByDish={videosByDish} />
+        </Modal>
+
+        {/* Eat outside section - only shown after dishes are selected */}
+        {selection.length > 0 && (
+          <section id="outside" className={cardClass}>
+            <h2 className={sectionTitleClass}>Eat Outside</h2>
+            <p className={sectionSubtitleClass}>
+              Shows stubbed venues; "Using city-level location."
+            </p>
+
+            {venues ? (
+              <>
+                <div
+                  className="mt-4 grid gap-3 md:grid-cols-2"
+                  aria-label="Venue list"
+                >
+                  {venues.map((v) => (
+                    <div
+                      key={v.id}
+                      className="rounded-xl border border-brand-aqua/50 bg-[rgb(var(--card))] p-3 shadow-soft transition-all duration-150 hover:-translate-y-0.5 hover:border-brand-gold hover:shadow-panel"
+                    >
+                      <div className="mb-1 text-base font-bold text-brand-dusk dark:text-white">
+                        {v.name}
+                      </div>
+                      <div className="text-sm font-semibold text-brand-dusk/90 dark:text-brand-glow">
+                        {v.cuisine} • {v.price} • {v.rating.toFixed(1)}★ •{" "}
+                        {v.distance_km} km
+                      </div>
+                      <div className="mt-1 text-sm text-brand-dusk/80 dark:text-brand-glow/85">{v.addr}</div>
+                      <a
+                        className="mt-2 inline-block text-sm font-bold text-brand-coral hover:text-brand-dusk dark:text-brand-gold dark:hover:text-white underline-offset-2 hover:underline"
+                        href={v.url}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        Visit website
+                      </a>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-            <div className="mt-3">
-              <MapWithPins venues={venues} />
-            </div>
-          </>
+                <div className="mt-4 overflow-hidden rounded-2xl border border-brand-aqua/50 shadow-soft">
+                  <MapWithPins venues={venues} />
+                </div>
+              </>
+            ) : (
+              <div className="mt-3 rounded-xl border border-dashed border-brand-aqua/50 bg-[rgb(var(--card))] px-4 py-6 text-sm font-semibold text-brand-dusk dark:text-white">
+                Click{" "}
+                <span className="font-bold text-brand-coral dark:text-brand-gold">
+                  "📍 Eat Outside"
+                </span>{" "}
+                above to see nearby places that match your dishes.
+              </div>
+            )}
+          </section>
         )}
-      </section>
-    </div>
+      </div >
+    </div >
   );
 }
 
-// Client-only page to avoid hydration issues
+// Client-only dynamic import
 export default dynamic(() => Promise.resolve(HomePage), { ssr: false });

@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db";
 import type { Prisma } from "@prisma/client";
 import { Dish as UIDish } from "./schemas"; // UI/Spin Dish type (arrays)
+import { normalizeAllergens } from "../lib/allergens";
 
 function splitCSV(s: string | null | undefined): string[] {
   return (s ?? "")
@@ -14,7 +15,8 @@ function toUIDish(row: { id: string; name: string; category: string; tags: strin
     name: row.name,
     category: row.category,
     tags: splitCSV(row.tags),
-    allergens: splitCSV(row.allergens),
+    // preserve whatever tokens are stored in the DB (trimmed), but expose as an array
+    allergens: normalizeAllergens(row.allergens),
     costBand: row.costBand,
     timeBand: row.timeBand,
     isHealthy: row.isHealthy,
@@ -23,25 +25,25 @@ function toUIDish(row: { id: string; name: string; category: string; tags: strin
 }
 
 const parseArrayField = (v: any): string[] => {
-	if (!v) return [];
-	if (Array.isArray(v)) {
-		// sometimes Prisma returns array of one string like '["dairy","gluten"]'
-		if (v.length === 1 && v[0].startsWith('["')) {
-			return v[0]
-				.replace(/^\[|]$/g, '')          // remove [ and ]
-				.split(',')
-				.map((s: string) => s.replace(/"/g, '').trim().toLowerCase());
-		}
-		return v.map((s: string) => s.trim().toLowerCase());
-	}
-	if (typeof v === "string") {
-		try {
-			const parsed = JSON.parse(v);
-			if (Array.isArray(parsed)) return parsed.map((s: string) => s.trim().toLowerCase());
-		} catch {}
-		return v.split(',').map((s: string) => s.trim().toLowerCase());
-	}
-	return [];
+  if (!v) return [];
+  if (Array.isArray(v)) {
+    // sometimes Prisma returns array of one string like '["dairy","gluten"]'
+    if (v.length === 1 && v[0].startsWith('["')) {
+      return v[0]
+        .replace(/^\[|]$/g, '')          // remove [ and ]
+        .split(',')
+        .map((s: string) => s.replace(/"/g, '').trim().toLowerCase());
+    }
+    return v.map((s: string) => s.trim().toLowerCase());
+  }
+  if (typeof v === "string") {
+    try {
+      const parsed = JSON.parse(v);
+      if (Array.isArray(parsed)) return parsed.map((s: string) => s.trim().toLowerCase());
+    } catch { }
+    return v.split(',').map((s: string) => s.trim().toLowerCase());
+  }
+  return [];
 };
 
 
@@ -104,11 +106,14 @@ export async function dishes(
   const norm = (s: string) => s.trim().toLowerCase();
 
   const selectedTags = tags.map(norm);
-  const excludedAllergens = allergens.map(norm);
+  // normalize requested allergens using the permissive normalizer, then compare case-insensitively
+  const excludedAllergensLower = normalizeAllergens(allergens).map((a) => a.toLowerCase());
 
   const filtered = rows.filter((r) => {
-    const rTags = parseArrayField(r.tags);           // normalized lowercase array
-    const rAllergens = parseArrayField(r.allergens); // normalized lowercase array
+    const rTags = parseArrayField(r.tags); // normalized lowercase array (splitCSV already trims)
+    // preserve DB tokens for UI but compare lowercase for filtering
+    const rAllergensPreserve = normalizeAllergens(r.allergens);
+    const rAllergensLower = rAllergensPreserve.map((a) => a.toLowerCase());
 
     // TAGS: keep dish only if it contains ALL selected tags (unchanged)
     const tagsOk =
@@ -117,8 +122,8 @@ export async function dishes(
 
     // ALLERGENS: EXCLUDE dish if it contains ANY selected allergen (reversed logic)
     const allergensOk =
-      excludedAllergens.length === 0 ||
-      rAllergens.every((a) => !excludedAllergens.includes(a));
+      excludedAllergensLower.length === 0 ||
+      rAllergensLower.every((a) => !excludedAllergensLower.includes(a));
 
     return tagsOk && allergensOk;
   });

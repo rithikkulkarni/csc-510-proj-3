@@ -43,35 +43,37 @@ export default function PartyChat({ code, nickname, transportLabel, onGetRealtim
       (rtRef.current as any).emit("chat", payload);
       setMsgs((m) => [...m, payload]); // optimistic
       setText("");
-    } catch {}
+    } catch { }
   };
 
   return (
     <div className="rounded-2xl border bg-white dark:bg-neutral-900 dark:border-neutral-800">
       <div className="px-3 py-2 text-sm font-semibold">Party chat</div>
-      <div className="h-40 overflow-auto border-y px-3 py-2 text-xs dark:border-neutral-800">
+      <div className="h-80 overflow-auto border-y px-3 py-2 text-xs bg-gray-100 dark:bg-neutral-800 dark:border-neutral-800">
         {msgs.length === 0 ? (
-          <div className="text-neutral-500">No messages yet.</div>
+          <div className="text-neutral-500 dark:text-neutral-400">No messages yet.</div>
         ) : (
           msgs.map((m) => (
-            <div key={m.id} className="mb-1">
-              <span className="mr-2 rounded bg-sky-600/20 px-1.5 py-0.5 text-sky-200 dark:text-sky-300">{m.nick}</span>
-              <span className="text-neutral-300">{new Date(m.ts).toLocaleTimeString()}</span>
-              <div className="pl-2">{m.text}</div>
+            <div key={m.id} className="mb-3 p-2 rounded bg-gray-50 dark:bg-neutral-700/40">
+              <div className="flex items-center gap-2 mb-1 flex-wrap">
+                <span className="rounded bg-sky-500/30 px-2 py-0.5 font-semibold text-sky-700 dark:bg-sky-600/40 dark:text-sky-200">{m.nick}</span>
+                <span className="text-gray-500 dark:text-gray-300 text-xs">{new Date(m.ts).toLocaleTimeString()}</span>
+              </div>
+              <div className="text-gray-950 dark:text-gray-50 break-words whitespace-pre-wrap text-sm leading-relaxed">{m.text}</div>
             </div>
           ))
         )}
       </div>
       <div className="flex gap-2 p-2">
         <input
-          className="flex-1 rounded border border-neutral-300 bg-white px-2 py-1 text-sm dark:border-neutral-700 dark:bg-neutral-800"
+          className="flex-1 rounded border border-neutral-300 bg-white px-2 py-1 text-sm text-gray-900 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
           placeholder="Message…"
           value={text}
           onChange={(e) => setText(e.currentTarget.value)}
           onKeyDown={(e) => e.key === "Enter" && send()}
         />
         <button
-          className="rounded border border-neutral-300 px-3 py-1 text-sm hover:bg-neutral-50 dark:border-neutral-700 dark:hover:bg-neutral-800"
+          className="rounded border border-neutral-300 px-3 py-1 text-sm font-medium text-gray-900 hover:bg-gray-100 dark:border-neutral-700 dark:text-white dark:hover:bg-neutral-700"
           onClick={send}
         >
           Send

@@ -1,89 +1,107 @@
 "use client";
 
-import React from "react"
-import { useEffect, useState } from "react";
-import { cn } from "./ui/cn"; // assuming you have your cn helper
+import { useState, useEffect } from "react";
+import { useUser } from "../app/context/UserContext";
+import { cn } from "./ui/cn";
+import { categoryPillBase } from "./ui/style";
 
 type FilterMenuProps = {
-	onTagChange: (tags: string[]) => void;
-	onAllergenChange: (allergens: string[]) => void;
+  data?: {
+    tags?: string[];
+    allergens?: string[];
+  };
+  onTagChange?: (selected: string[]) => void;
+  onAllergenChange?: (selected: string[]) => void;
 };
 
-export default function FilterMenu({ onTagChange, onAllergenChange }: FilterMenuProps) {
-	const [tags, setTags] = useState<string[]>([]);
-	const [allergens, setAllergens] = useState<string[]>([]);
-	const [selectedTags, setSelectedTags] = useState<string[]>([]);
-	const [selectedAllergens, setSelectedAllergens] = useState<string[]>([]);
+export default function FilterMenu({ data, onTagChange = () => { }, onAllergenChange = () => { } }: FilterMenuProps) {
+  const { user } = useUser();
 
-	useEffect(() => {
-		fetch("/api/filters")
-			.then(res => res.json())
-			.then(data => {
-				setTags(data.tags ?? []);
-				setAllergens(data.allergens ?? []);
-			})
-			.catch(err => console.error("Failed to fetch filters:", err));
-	}, []);
+  const [tags, setTags] = useState<string[]>(data?.tags ?? []);
+  const [allergens, setAllergens] = useState<string[]>(data?.allergens ?? []);
 
-	const toggleTag = (tag: string) => {
-		const updated = selectedTags.includes(tag)
-			? selectedTags.filter(t => t !== tag)
-			: [...selectedTags, tag];
-		setSelectedTags(updated);
-		onTagChange(updated);
-	};
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [selectedAllergens, setSelectedAllergens] = useState<string[]>([]);
 
-	const toggleAllergen = (allergen: string) => {
-		const updated = selectedAllergens.includes(allergen)
-			? selectedAllergens.filter(a => a !== allergen)
-			: [...selectedAllergens, allergen];
-		setSelectedAllergens(updated);
-		onAllergenChange(updated);
-	};
+  // Fetch filters if no `data` prop was provided (tests mock global.fetch)
+  useEffect(() => {
+    if (data) return;
 
-	return (
-		<section className="rounded-2xl border bg-white p-4 shadow-sm space-y-2">
-			<h2 className="text-lg font-semibold">Filters</h2>
+    let cancelled = false;
 
-			{/* Tags Dropdown */}
-			<details className="border rounded-md p-2">
-				<summary className="cursor-pointer font-medium">Tags</summary>
-				<div className="mt-2 flex flex-wrap gap-2">
-					{tags.map(tag => (
-						<button
-							key={tag}
-							onClick={() => toggleTag(tag)}
-							className={cn(
-								"rounded-full border px-3 py-1 text-sm",
-								selectedTags.includes(tag) ? "bg-neutral-900 text-white" : "bg-white"
-							)}
-							aria-pressed={selectedTags.includes(tag)}
-						>
-							{tag}
-						</button>
-					))}
-				</div>
-			</details>
+    (async () => {
+      try {
+        console.log('FilterMenu: fetching filters from /api/filters');
+        const res = await fetch("/api/filters");
+        if (!res.ok) throw new Error("bad response");
+        const json = await res.json();
+        console.log('FilterMenu: received filters', json);
+        if (cancelled) return;
+        setTags(json.tags ?? []);
+        setAllergens(json.allergens ?? []);
+      } catch (err) {
+        console.error("FilterMenu: Failed to fetch filters:", err);
+      }
+    })();
 
-			{/* Allergens Dropdown */}
-			<details className="border rounded-md p-2">
-				<summary className="cursor-pointer font-medium">Allergens</summary>
-				<div className="mt-2 flex flex-wrap gap-2">
-					{allergens.map(a => (
-						<button
-							key={a}
-							onClick={() => toggleAllergen(a)}
-							className={cn(
-								"rounded-full border px-3 py-1 text-sm",
-								selectedAllergens.includes(a) ? "bg-neutral-900 text-white" : "bg-white"
-							)}
-							aria-pressed={selectedAllergens.includes(a)}
-						>
-							{a}
-						</button>
-					))}
-				</div>
-			</details>
-		</section>
-	);
+    return () => {
+      cancelled = true;
+    };
+  }, [data]);
+
+  // Initialize selections based on user preferences and available options
+  useEffect(() => {
+    if (!allergens || allergens.length === 0) return;
+
+    const userAllergens = user?.allergens ?? [];
+    const validAllergens = allergens.filter((a) => userAllergens.includes(a));
+    setSelectedAllergens(validAllergens);
+    onAllergenChange(validAllergens);
+  }, [user, JSON.stringify(allergens), onAllergenChange]);
+
+  const toggleAllergen = (allergen: string) => {
+    const updated = selectedAllergens.includes(allergen)
+      ? selectedAllergens.filter((a) => a !== allergen)
+      : [...selectedAllergens, allergen];
+
+    setSelectedAllergens(updated);
+    onAllergenChange(updated);
+  };
+
+  const toggleTag = (tag: string) => {
+    const updated = selectedTags.includes(tag) ? selectedTags.filter((t) => t !== tag) : [...selectedTags, tag];
+    setSelectedTags(updated);
+    onTagChange(updated);
+  };
+
+  return (
+    <div className="space-y-4">
+      <h3 className="font-medium">Allergens</h3>
+      <div className="flex flex-wrap gap-2">
+        {allergens.length === 0 ? (
+          <p className="text-sm text-gray-500">Loading allergens...</p>
+        ) : (
+          allergens.map((allergen) => {
+            const active = selectedAllergens.includes(allergen);
+            return (
+              <button
+                key={allergen}
+                type="button"
+                aria-pressed={active}
+                onClick={() => toggleAllergen(allergen)}
+                className={cn(
+                  categoryPillBase,
+                  active
+                    ? "border-transparent bg-gradient-to-r from-brand-coral to-brand-gold text-brand-dusk shadow-glow"
+                    : "text-brand-dusk hover:text-brand-dusk hover:border-brand-gold/80 dark:text-white/80 dark:hover:text-white"
+                )}
+              >
+                {allergen}
+              </button>
+            );
+          })
+        )}
+      </div>
+    </div>
+  );
 }

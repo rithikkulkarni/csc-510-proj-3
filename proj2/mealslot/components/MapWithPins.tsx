@@ -1,4 +1,5 @@
 "use client";
+
 import React, { useEffect, useRef, useState } from "react";
 
 type Venue = {
@@ -127,5 +128,10 @@ export default function MapWithPins({ venues }: { venues: Venue[] }) {
     }
   }, [venues, apiKey, userLocation]);
 
-  return <div ref={mapRef} style={{ width: "100%", height: 360, borderRadius: 12 }} />;
+  return (
+    <div
+      ref={mapRef}
+      className="h-[360px] w-full rounded-2xl bg-neutral-100"
+    />
+  );
 }

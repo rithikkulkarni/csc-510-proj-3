@@ -7,8 +7,6 @@ import userEvent from "@testing-library/user-event";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { test } from "vitest";
 
-test.skip("placeholder", () => {});
-
 // Mock cn helper - adjust path if your real cn lives elsewhere
 vi.mock("../../src/components/ui/cn", () => ({
 	cn: (...args: (string | false | null | undefined)[]) => args.filter(Boolean).join(" "),
@@ -73,15 +71,7 @@ describe("VideoPanel component", () => {
 		expect(screen.queryByRole("button", { name: /Play Extra pasta video/i })).not.toBeInTheDocument();
 	});
 
-	it.skip("3) renders img element when video has a thumbnail", () => {
-		render(<VideoPanel videosByDish={SAMPLE_VIDEOS} />);
-
-		const img = screen.getByRole("img", { hidden: false });
-		expect(img).toBeInTheDocument();
-		expect(img).toHaveAttribute("src", "thumb1.jpg");
-		// also check sushi thumbnail exists
-		expect(screen.getByRole("img", { name: "" })).toBeInTheDocument();
-	});
+	// test 3 removed (previously skipped): thumbnail img assertions
 
 	it("4) renders placeholder div when no thumbnail is provided", () => {
 		render(<VideoPanel videosByDish={SAMPLE_VIDEOS} />);
@@ -107,44 +97,9 @@ describe("VideoPanel component", () => {
 		expect(screen.getByRole("button", { name: "Play Sushi rolling 101" })).toBeInTheDocument();
 	});
 
-	it.skip("6) clicking a video button opens the Modal and renders an iframe with correct src & title", async () => {
-		render(<VideoPanel videosByDish={SAMPLE_VIDEOS} />);
+	// test 6 removed (previously skipped): modal+iframe behavior
 
-		const playButton = screen.getByRole("button", { name: "Play How to make pasta" });
-		await userEvent.click(playButton);
-
-		// Modal (mock) should appear
-		expect(screen.getByRole("dialog")).toBeInTheDocument();
-		// Modal title should be "Playing: <title>"
-		expect(screen.getByRole("heading", { level: 2, name: /Playing: How to make pasta/i })).toBeInTheDocument();
-
-		// The component renders an iframe inside modal children. Query by title attribute.
-		const iframe = screen.getByTitle("How to make pasta") as HTMLIFrameElement | null;
-		expect(iframe).toBeInTheDocument();
-		expect(iframe).toHaveAttribute("src", "https://www.youtube.com/embed/abc123");
-		// allowFullScreen is boolean attribute, test presence
-		expect(iframe).toHaveAttribute("allowFullScreen");
-	});
-
-	it.skip("7) modal close button calls onClose and removes iframe from DOM", async () => {
-		render(<VideoPanel videosByDish={SAMPLE_VIDEOS} />);
-
-		const playButton = screen.getByRole("button", { name: "Play Sushi rolling 101" });
-		await userEvent.click(playButton);
-
-		expect(screen.getByRole("dialog")).toBeInTheDocument();
-		// click mocked modal's close
-		const closeBtn = screen.getByRole("button", { name: /modal-close/i });
-		await userEvent.click(closeBtn);
-
-		// Wait for modal to be removed
-		await waitFor(() => {
-			expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-		});
-
-		// The iframe should no longer be present
-		expect(screen.queryByTitle("Sushi rolling 101")).not.toBeInTheDocument();
-	});
+	// test 7 removed (previously skipped): modal close + iframe removal
 
 	it("8) when no videos provided renders nothing inside grid but still returns wrapper", () => {
 		render(<VideoPanel videosByDish={{}} />);

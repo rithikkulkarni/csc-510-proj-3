@@ -1,9 +1,12 @@
-// --- path: app/layout.tsx ---
-import { StackProvider, StackTheme } from "@stackframe/stack";
-import { client } from "../stack/client";
+// app/layout.tsx
 import "./globals.css";
 import type { ReactNode } from "react";
-import ThemeProvider from "@/components/theme-provider";
+import { StackProvider, StackTheme } from "@stackframe/stack";
+import { stackServerApp } from "@/stack/server"; // or "../stack/server" if not using alias
+import HeaderServer from "@/components/HeaderServer";
+import { UserProvider } from "./context/UserContext";
+
+export const dynamic = 'force-dynamic';
 
 export const metadata = {
   title: "MealSlot",
@@ -13,12 +16,11 @@ export const metadata = {
 const noFoucScript = `
 (function() {
   try {
-    var stored = localStorage.getItem('theme');           // "dark" | "light" | null
+    var stored = localStorage.getItem('theme');           
     var prefers = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
     var dark = stored ? (stored === 'dark') : prefers;
     document.documentElement.classList.toggle('dark', !!dark);
 
-    // expose a tiny debugger hook so you can flip from DevTools
     window.__flipTheme = function() {
       var now = document.documentElement.classList.contains('dark');
       var next = !now;
@@ -36,11 +38,21 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <head>
         <script dangerouslySetInnerHTML={{ __html: noFoucScript }} />
       </head>
-      <body className="min-h-screen bg-white text-neutral-900 dark:bg-neutral-950 dark:text-neutral-100"><StackProvider app={client}><StackTheme>
-        <ThemeProvider>
-          {children}
-        </ThemeProvider>
-      </StackTheme></StackProvider></body>
+      <body className="min-h-screen bg-white text-neutral-900 dark:bg-neutral-950 dark:text-neutral-100">
+        <UserProvider>
+          <StackProvider app={stackServerApp}>
+            <StackTheme>
+              {/* Sticky header */}
+              <div className="sticky top-0 z-50">
+                <HeaderServer />
+              </div>
+
+              {/* Page content */}
+              <main>{children}</main>
+            </StackTheme>
+          </StackProvider>
+        </UserProvider>
+      </body>
     </html>
   );
 }

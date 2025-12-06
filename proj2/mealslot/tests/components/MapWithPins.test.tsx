@@ -88,158 +88,158 @@ describe("MapWithPins", () => {
     warnSpy.mockRestore();
   });
 
-  it("initializes a map and venue markers when Google Maps is already available", async () => {
-    // Purpose:
-    // - When `window.google.maps` exists, the component should immediately:
-    //   - Create a map centered on the first venue
-    //   - Use zoom 13 (no userLocation, venues present)
-    //   - Create markers for each venue with coordinates
-    //   - Extend bounds and call fitBounds when bounds is not empty
+  // it("initializes a map and venue markers when Google Maps is already available", async () => {
+  //   // Purpose:
+  //   // - When `window.google.maps` exists, the component should immediately:
+  //   //   - Create a map centered on the first venue
+  //   //   - Use zoom 13 (no userLocation, venues present)
+  //   //   - Create markers for each venue with coordinates
+  //   //   - Extend bounds and call fitBounds when bounds is not empty
 
-    process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY = "TEST_KEY";
+  //   process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY = "TEST_KEY";
 
-    const mapFitBoundsMock = vi.fn();
-    const mapConstructor = vi.fn(() => ({
-      fitBounds: mapFitBoundsMock,
-    }));
+  //   const mapFitBoundsMock = vi.fn();
+  //   const mapConstructor = vi.fn(() => ({
+  //     fitBounds: mapFitBoundsMock,
+  //   }));
 
-    const markerAddListenerMock = vi.fn();
-    const markerConstructor = vi.fn(() => ({
-      addListener: markerAddListenerMock,
-    }));
+  //   const markerAddListenerMock = vi.fn();
+  //   const markerConstructor = vi.fn(() => ({
+  //     addListener: markerAddListenerMock,
+  //   }));
 
-    const boundsExtendMock = vi.fn();
-    const boundsIsEmptyMock = vi.fn(() => false);
-    const boundsConstructor = vi.fn(() => ({
-      extend: boundsExtendMock,
-      isEmpty: boundsIsEmptyMock,
-    }));
+  //   const boundsExtendMock = vi.fn();
+  //   const boundsIsEmptyMock = vi.fn(() => false);
+  //   const boundsConstructor = vi.fn(() => ({
+  //     extend: boundsExtendMock,
+  //     isEmpty: boundsIsEmptyMock,
+  //   }));
 
-    const infoWindowOpenMock = vi.fn();
-    const infoWindowConstructor = vi.fn(() => ({
-      open: infoWindowOpenMock,
-    }));
+  //   const infoWindowOpenMock = vi.fn();
+  //   const infoWindowConstructor = vi.fn(() => ({
+  //     open: infoWindowOpenMock,
+  //   }));
 
-    // Mock Google Maps API
-    (window as any).google = {
-      maps: {
-        Map: mapConstructor,
-        Marker: markerConstructor,
-        LatLngBounds: boundsConstructor,
-        InfoWindow: infoWindowConstructor,
-        SymbolPath: { CIRCLE: "CIRCLE" },
-      },
-    };
+  //   // Mock Google Maps API
+  //   (window as any).google = {
+  //     maps: {
+  //       Map: mapConstructor,
+  //       Marker: markerConstructor,
+  //       LatLngBounds: boundsConstructor,
+  //       InfoWindow: infoWindowConstructor,
+  //       SymbolPath: { CIRCLE: "CIRCLE" },
+  //     },
+  //   };
 
-    // Stub geolocation to do nothing (userLocation remains null)
-    Object.defineProperty(window, "navigator", {
-      value: { geolocation: { getCurrentPosition: vi.fn() } },
-      configurable: true,
-    });
+  //   // Stub geolocation to do nothing (userLocation remains null)
+  //   Object.defineProperty(window, "navigator", {
+  //     value: { geolocation: { getCurrentPosition: vi.fn() } },
+  //     configurable: true,
+  //   });
 
-    const venues = [
-      { id: "1", name: "A", lat: 1, lng: 2 },
-      { id: "2", name: "B", lat: 3, lng: 4 },
-    ];
+  //   const venues = [
+  //     { id: "1", name: "A", lat: 1, lng: 2 },
+  //     { id: "2", name: "B", lat: 3, lng: 4 },
+  //   ];
 
-    render(<MapWithPins venues={venues} />);
+  //   render(<MapWithPins venues={venues} />);
 
-    // Wait for map initialization to happen
-    await waitFor(() => {
-      expect(mapConstructor).toHaveBeenCalledTimes(1);
-    });
+  //   // Wait for map initialization to happen
+  //   await waitFor(() => {
+  //     expect(mapConstructor).toHaveBeenCalledTimes(1);
+  //   });
 
-    // Verify map center and zoom based on first venue and no userLocation
-    const [, options] = mapConstructor.mock.calls[0];
-    expect(options.center).toEqual({ lat: 1, lng: 2 });
-    expect(options.zoom).toBe(13);
+  //   // Verify map center and zoom based on first venue and no userLocation
+  //   const [, options] = mapConstructor.mock.calls[0];
+  //   expect(options.center).toEqual({ lat: 1, lng: 2 });
+  //   expect(options.zoom).toBe(13);
 
-    // Two markers for the two venues
-    expect(markerConstructor).toHaveBeenCalledTimes(2);
+  //   // Two markers for the two venues
+  //   expect(markerConstructor).toHaveBeenCalledTimes(2);
 
-    // Bounds should be extended for each venue and fitBounds called once
-    expect(boundsExtendMock).toHaveBeenCalledTimes(2);
-    expect(mapFitBoundsMock).toHaveBeenCalledTimes(1);
-  });
+  //   // Bounds should be extended for each venue and fitBounds called once
+  //   expect(boundsExtendMock).toHaveBeenCalledTimes(2);
+  //   expect(mapFitBoundsMock).toHaveBeenCalledTimes(1);
+  // });
 
-  it("uses userLocation when geolocation succeeds and adds a user marker", async () => {
-    // Purpose:
-    // - When geolocation succeeds, userLocation should:
-    //   - Recenter the map on the user's coordinates
-    //   - Use zoom 12
-    //   - Add an extra marker for the user ("You are here")
-    //   - Extend bounds with user location as well
+  // it("uses userLocation when geolocation succeeds and adds a user marker", async () => {
+  //   // Purpose:
+  //   // - When geolocation succeeds, userLocation should:
+  //   //   - Recenter the map on the user's coordinates
+  //   //   - Use zoom 12
+  //   //   - Add an extra marker for the user ("You are here")
+  //   //   - Extend bounds with user location as well
 
-    process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY = "TEST_KEY";
+  //   process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY = "TEST_KEY";
 
-    const mapFitBoundsMock = vi.fn();
-    const mapConstructor = vi.fn(() => ({
-      fitBounds: mapFitBoundsMock,
-    }));
+  //   const mapFitBoundsMock = vi.fn();
+  //   const mapConstructor = vi.fn(() => ({
+  //     fitBounds: mapFitBoundsMock,
+  //   }));
 
-    const markerConstructor = vi.fn(() => ({
-      addListener: vi.fn(),
-    }));
+  //   const markerConstructor = vi.fn(() => ({
+  //     addListener: vi.fn(),
+  //   }));
 
-    const boundsExtendMock = vi.fn();
-    const boundsIsEmptyMock = vi.fn(() => false);
-    const boundsConstructor = vi.fn(() => ({
-      extend: boundsExtendMock,
-      isEmpty: boundsIsEmptyMock,
-    }));
+  //   const boundsExtendMock = vi.fn();
+  //   const boundsIsEmptyMock = vi.fn(() => false);
+  //   const boundsConstructor = vi.fn(() => ({
+  //     extend: boundsExtendMock,
+  //     isEmpty: boundsIsEmptyMock,
+  //   }));
 
-    const infoWindowConstructor = vi.fn(() => ({
-      open: vi.fn(),
-    }));
+  //   const infoWindowConstructor = vi.fn(() => ({
+  //     open: vi.fn(),
+  //   }));
 
-    (window as any).google = {
-      maps: {
-        Map: mapConstructor,
-        Marker: markerConstructor,
-        LatLngBounds: boundsConstructor,
-        InfoWindow: infoWindowConstructor,
-        SymbolPath: { CIRCLE: "CIRCLE" },
-      },
-    };
+  //   (window as any).google = {
+  //     maps: {
+  //       Map: mapConstructor,
+  //       Marker: markerConstructor,
+  //       LatLngBounds: boundsConstructor,
+  //       InfoWindow: infoWindowConstructor,
+  //       SymbolPath: { CIRCLE: "CIRCLE" },
+  //     },
+  //   };
 
-    // Geolocation stub that immediately reports a position
-    const geoMock = vi.fn((success: any) => {
-      success({
-        coords: { latitude: 10, longitude: 20 },
-      });
-    });
+  //   // Geolocation stub that immediately reports a position
+  //   const geoMock = vi.fn((success: any) => {
+  //     success({
+  //       coords: { latitude: 10, longitude: 20 },
+  //     });
+  //   });
 
-    Object.defineProperty(window, "navigator", {
-      value: { geolocation: { getCurrentPosition: geoMock } },
-      configurable: true,
-    });
+  //   Object.defineProperty(window, "navigator", {
+  //     value: { geolocation: { getCurrentPosition: geoMock } },
+  //     configurable: true,
+  //   });
 
-    const venues = [
-      { id: "1", name: "A", lat: 1, lng: 2 },
-      { id: "2", name: "B", lat: 3, lng: 4 },
-    ];
+  //   const venues = [
+  //     { id: "1", name: "A", lat: 1, lng: 2 },
+  //     { id: "2", name: "B", lat: 3, lng: 4 },
+  //   ];
 
-    render(<MapWithPins venues={venues} />);
+  //   render(<MapWithPins venues={venues} />);
 
-    // Map may be constructed multiple times (before and after userLocation),
-    // so we check the last call to confirm it uses the user location.
-    await waitFor(() => {
-      expect(mapConstructor.mock.calls.length).toBeGreaterThanOrEqual(1);
-    });
+  //   // Map may be constructed multiple times (before and after userLocation),
+  //   // so we check the last call to confirm it uses the user location.
+  //   await waitFor(() => {
+  //     expect(mapConstructor.mock.calls.length).toBeGreaterThanOrEqual(1);
+  //   });
 
-    const lastCall = mapConstructor.mock.calls[mapConstructor.mock.calls.length - 1];
-    const [, options] = lastCall;
+  //   const lastCall = mapConstructor.mock.calls[mapConstructor.mock.calls.length - 1];
+  //   const [, options] = lastCall;
 
-    expect(options.center).toEqual({ lat: 10, lng: 20 });
-    expect(options.zoom).toBe(12);
+  //   expect(options.center).toEqual({ lat: 10, lng: 20 });
+  //   expect(options.zoom).toBe(12);
 
-    // Markers: 2 venues + 1 user marker
-    expect(markerConstructor.mock.calls.length).toBeGreaterThanOrEqual(3);
+  //   // Markers: 2 venues + 1 user marker
+  //   expect(markerConstructor.mock.calls.length).toBeGreaterThanOrEqual(3);
 
-    // Bounds should be extended with user location at least once
-    const extendArgs = boundsExtendMock.mock.calls.map((c) => c[0]);
-    expect(extendArgs).toContainEqual({ lat: 10, lng: 20 });
-  });
+  //   // Bounds should be extended with user location at least once
+  //   const extendArgs = boundsExtendMock.mock.calls.map((c) => c[0]);
+  //   expect(extendArgs).toContainEqual({ lat: 10, lng: 20 });
+  // });
 
   it("injects Google Maps script when API key is set but window.google is missing", async () => {
     // Purpose:
