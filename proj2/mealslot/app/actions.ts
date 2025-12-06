@@ -1,113 +1,120 @@
 'use server';
 
-import { prisma } from "@/lib/db";
-import { client } from "@/lib/neon";
+import { prisma } from '@/lib/db';
 
-// -------------------------------------
-// Fetch all allergens that exist in dishes
-// -------------------------------------
+export type NeonUser = {
+  id: string;
+  displayName?: string | null;
+  email?: string | null;
+};
+
+// -------------------------
+// Fetch all allergens
+// -------------------------
 export async function getAllAllergens(): Promise<string[]> {
-  const dishes = await prisma.dish.findMany({
-    select: { allergens: true },
+  const dishes = await prisma.dish.findMany({ select: { allergens: true } });
+  const normalize = (raw: string): string[] => {
+    if (!raw) return [];
+    const cleaned = raw.replaceAll("{", "").replaceAll("}", "").replaceAll("[", "").replaceAll("]", "").replaceAll('"', "");
+    const aliases: Record<string, string> = {
+      tree_nut: "nuts",
+      "tree-nut": "nuts"
+    };
+    return cleaned
+      .split(/[,;\n]/)
+      .map(s => s.trim())
+      .flatMap(s => s.split(/\s+/))
+      .map(s => s.replace(/[-]/g, "_").toLowerCase())
+      .map(s => s.replace(/[^a-z0-9_]/g, ""))
+      .map(s => aliases[s] ?? s)
+      .filter(Boolean);
+  };
+
+  const merged = dishes.flatMap(d => {
+    if (!d.allergens) return [] as string[];
+    try {
+      const parsed = JSON.parse(d.allergens);
+      if (Array.isArray(parsed)) {
+        return parsed.flatMap(v => normalize(String(v)));
+      }
+      return normalize(String(parsed));
+    } catch {
+      return normalize(d.allergens);
+    }
   });
 
-  const allAllergens = Array.from(
-    new Set(
-      dishes.flatMap(d => {
-        if (!d.allergens) return [];
-        try {
-          const parsed = JSON.parse(d.allergens);
-          if (Array.isArray(parsed)) return parsed;
-          return [];
-        } catch {
-          return d.allergens.split(",").map(s => s.trim());
-        }
-      })
-    )
-  ).filter(Boolean);
-
-  return allAllergens;
+  return Array.from(new Set(merged)).filter(Boolean);
 }
 
-// -------------------------------------
+// -------------------------
 // Get user details
-// Pulls profile + allergens from public.User
-// and auth metadata from neon_auth.users_sync
-// -------------------------------------
-export async function getUserDetails(userId: string | undefined) {
+// -------------------------
+export async function getUserDetails(userId?: string) {
   if (!userId) return null;
 
-  // Lookup the public user by auth_id
-  const user = await prisma.user.findUnique({
-    where: { auth_id: userId },
-  });
+  const user = await prisma.user.findUnique({ where: { auth_id: userId } });
+  if (!user) return null;
 
-  if (!user) {
-    console.warn("No matching user row found for auth_id", userId);
-    return null;
-  }
-
-  // Lookup neon auth metadata (email, created_at, etc.)
-  const authRows = await client.query(
-    `SELECT * FROM neon_auth.users_sync WHERE id = $1`,
-    [userId]
-  );
-
-  const auth = authRows[0] ?? null;
   const allAllergens = await getAllAllergens();
 
   return {
     id: user.id,
     auth_id: user.auth_id,
     name: user.name,
-    email: auth?.email ?? null,
     allergens: user.allergens ?? [],
     savedMeals: user.savedMeals ?? [],
     allAllergens,
   };
 }
 
-// -------------------------------------
+// -------------------------
 // Update user details
-// Writes allergens and savedMeals into public.User
-// -------------------------------------
+// -------------------------
 export async function updateUserDetails(
-  userId: string | undefined,
-  data: {
-    name?: string;
-    allergens?: string[];
-    savedMeals?: string[];
-  }
+  userId: string,
+  data: { name?: string; allergens?: string[]; savedMeals?: string[] }
 ) {
-  if (!userId) throw new Error("User ID is required");
-
-  const updated = await prisma.user.update({
+  await prisma.user.update({
     where: { auth_id: userId },
     data: {
-      ...(data.name && { name: data.name }),
-      ...(data.allergens && { allergens: data.allergens }),
-      ...(data.savedMeals && { savedMeals: data.savedMeals }),
+      ...(data.name !== undefined && { name: data.name }),
+      ...(data.allergens !== undefined && { allergens: data.allergens }),
+      ...(data.savedMeals !== undefined && { savedMeals: data.savedMeals }),
     },
   });
 
   return getUserDetails(userId);
 }
 
-// -------------------------------------
-// Ensure a user exists in the public.User table
-// -------------------------------------
-export async function ensureUserInDB(authUser: { id: string; display_name?: string }) {
-  if (!authUser?.id) return null;
+// -------------------------
+// Ensure user exists in public.user
+// -------------------------
+export async function ensureUserInDB(neonUser: NeonUser | null) {
+  if (!neonUser?.id) {
+    console.error('ensureUserInDB: no neonUser provided');
+    return null;
+  }
 
-  return prisma.user.upsert({
-    where: { auth_id: authUser.id },
-    update: {}, // nothing to update on existing user
-    create: {
-      id: crypto.randomUUID(),
-      auth_id: authUser.id,
-      name: authUser.display_name || "User",
-      allergens: [],
-      savedMeals: [],
-    },
-  });
+  console.log(`ensureUserInDB: creating user directly from Stack Auth for id=${neonUser.id}`);
+
+  try {
+    const upserted = await prisma.user.upsert({
+      where: { auth_id: neonUser.id },
+      update: {},
+      create: {
+        id: crypto.randomUUID(),
+        auth_id: neonUser.id,
+        name: neonUser.displayName ?? 'User',
+        allergens: [],
+        savedMeals: [],
+      },
+    });
+
+    console.log(`ensureUserInDB: public.user created/upserted for auth_id=${neonUser.id}`);
+    console.debug(`ensureUserInDB: result ->`, upserted);
+    return upserted;
+  } catch (err) {
+    console.error(`ensureUserInDB: failed to create user for auth_id=${neonUser.id}`, err);
+    throw err;
+  }
 }

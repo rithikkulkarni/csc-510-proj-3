@@ -2,7 +2,10 @@ import { z } from "zod";
 
 /** ---- Types & Validation ---- */
 export const DietEnum = z.enum(["omnivore", "vegetarian", "vegan", "pescatarian", "keto", "none"]);
-export const AllergenEnum = z.enum([
+// Baseline fallback allergens; final options come from dishes table at runtime.
+// Kept as an array only for UI fallback; we no longer export a Zod enum so that
+// arbitrary allergens from the DB pass validation.
+export const ALLERGEN_OPTIONS = [
   "gluten",
   "dairy",
   "egg",
@@ -12,12 +15,12 @@ export const AllergenEnum = z.enum([
   "shellfish",
   "fish",
   "sesame"
-]);
+];
 
 export const PrefsSchema = z.object({
   nickname: z.string().min(1).max(24).optional(),
   diet: DietEnum.optional(),
-  allergens: z.array(AllergenEnum).optional(),
+  allergens: z.array(z.string()).optional(),
   budgetBand: z.number().int().min(1).max(3).optional(), // 1=cheap 3=expensive
   timeBand: z.number().int().min(1).max(3).optional() // 1=fast 3=slow-ok
 });
@@ -25,7 +28,7 @@ export type Prefs = z.infer<typeof PrefsSchema>;
 
 export const ConstraintsSchema = z.object({
   diet: z.array(DietEnum).optional(), // merged = AND across users (strictest)
-  allergens: z.array(AllergenEnum).optional(), // merged = UNION across users
+  allergens: z.array(z.string()).optional(), // merged = UNION across users
   budgetBand: z.number().int().min(1).max(3).optional(), // merged = MIN
   timeBand: z.number().int().min(1).max(3).optional() // merged = MIN
 });
@@ -70,7 +73,7 @@ export function mergeConstraints(prefsList: Prefs[]): {
 
   const allergensMerged = Array.from(
     new Set(
-      prefsList.flatMap((p) => p.allergens ?? []).filter((a): a is z.infer<typeof AllergenEnum> => !!a)
+      prefsList.flatMap((p) => p.allergens ?? []).filter((a): a is string => !!a)
     )
   );
 
@@ -100,7 +103,7 @@ export function mergeConstraints(prefsList: Prefs[]): {
 
   if (merged.diet?.includes("vegan")) {
     const blocked = new Set(merged.allergens ?? []);
-    const many: z.infer<typeof AllergenEnum>[] = ["soy", "peanut", "tree_nut", "gluten"];
+    const many: string[] = ["soy", "peanut", "tree_nut", "gluten"];
     const count = many.filter((a) => blocked.has(a)).length;
     if (count >= 3) {
       conflict = true;

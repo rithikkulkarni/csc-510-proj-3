@@ -4,13 +4,12 @@ import {
   partyCodeFromSeed,
   PrefsSchema,
   DietEnum,
-  AllergenEnum,
 } from "@/lib/party"; // ⬅️ adjust to your actual path if needed
 
 type Prefs = {
   nickname?: string;
   diet?: (typeof DietEnum.enum)[keyof typeof DietEnum.enum];
-  allergens?: (typeof AllergenEnum.enum)[keyof typeof AllergenEnum.enum][];
+  allergens?: string[];
   budgetBand?: number;
   timeBand?: number;
 };

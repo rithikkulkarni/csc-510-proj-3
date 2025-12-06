@@ -14,9 +14,9 @@ export default function UserMenu({ user, onSignOut }: UserMenuProps) {
   return (
     <div className="relative inline-block text-left">
       <Menu as="div" className="relative inline-block text-left">
-        <Menu.Button className="inline-flex w-full justify-center rounded-md bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200">
+        <Menu.Button className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-[rgba(var(--card-border),0.9)] bg-[rgb(var(--card))] px-4 py-1.5 text-sm font-semibold text-[rgb(var(--fg))] shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md hover:border-[#E5623A]">
           Hi {user.name}
-          <ChevronDownIcon className="ml-2 h-5 w-5" aria-hidden="true" />
+          <ChevronDownIcon className="h-4 w-4 text-[rgb(var(--muted))]" aria-hidden="true" />
         </Menu.Button>
 
         <Transition
@@ -28,14 +28,14 @@ export default function UserMenu({ user, onSignOut }: UserMenuProps) {
           leaveFrom="transform opacity-100 scale-100"
           leaveTo="transform opacity-0 scale-95"
         >
-          <Menu.Items className="absolute right-0 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-50">
-            <div className="py-1">
+          <Menu.Items className="absolute right-0 mt-3 w-56 origin-top-right overflow-hidden rounded-xl border border-[rgba(var(--card-border),0.9)] bg-[rgb(var(--card))] shadow-2xl ring-1 ring-[rgba(var(--card-border),0.6)] backdrop-blur focus:outline-none z-50">
+            <div className="py-2">
               {/* Account Setting */}
               <Menu.Item>
                 {({ active }) => (
                   <Link
                     href="/account" // Updated to your AccountPage
-                    className={`${active ? "bg-gray-100" : ""} block px-4 py-2 text-sm text-gray-700`}
+                    className={`${active ? "bg-gradient-to-r from-brand-coral/10 to-brand-gold/10 text-brand-dusk" : "text-[rgb(var(--fg))]"} block px-4 py-2.5 text-sm font-medium`}
                   >
                     Account Setting
                   </Link>
@@ -47,7 +47,7 @@ export default function UserMenu({ user, onSignOut }: UserMenuProps) {
                 {({ active }) => (
                   <Link
                     href="/favorites"
-                    className={`${active ? "bg-gray-100" : ""} block px-4 py-2 text-sm text-gray-700`}
+                    className={`${active ? "bg-gradient-to-r from-brand-coral/10 to-brand-gold/10 text-brand-dusk" : "text-[rgb(var(--fg))]"} block px-4 py-2.5 text-sm font-medium`}
                   >
                     Saved Meals
                   </Link>
@@ -71,7 +71,7 @@ export default function UserMenu({ user, onSignOut }: UserMenuProps) {
                 {({ active }) => (
                   <button
                     onClick={onSignOut}
-                    className={`${active ? "bg-gray-100" : ""} w-full text-left px-4 py-2 text-sm text-red-600`}
+                    className={`${active ? "bg-gradient-to-r from-red-50 to-amber-50" : ""} w-full text-left px-4 py-2.5 text-sm font-semibold text-red-600`}
                   >
                     Sign Out
                   </button>

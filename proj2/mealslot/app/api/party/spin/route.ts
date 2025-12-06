@@ -37,9 +37,9 @@ export async function POST(req: Request) {
       { id: "fb_1", name: "Veggie Fried Rice", category: "dinner", tags: ["quick"], allergens: ["soy"], ytQuery: "veggie fried rice" },
       { id: "fb_2", name: "Chicken Tacos", category: "dinner", tags: ["gluten free"], allergens: [], ytQuery: "chicken tacos easy" },
       { id: "fb_3", name: "Mediterranean Grain Bowl", category: "dinner", tags: ["healthy"], allergens: ["dairy"], ytQuery: "mediterranean grain bowl" },
-      { id: "fb_4", name: "Pesto Pasta", category: "dinner", tags: [], allergens: ["gluten","dairy"], ytQuery: "pesto pasta" },
+      { id: "fb_4", name: "Pesto Pasta", category: "dinner", tags: [], allergens: ["gluten", "dairy"], ytQuery: "pesto pasta" },
       { id: "fb_5", name: "Fruit Yogurt Cup", category: "dessert", tags: ["healthy"], allergens: ["dairy"], ytQuery: "fruit yogurt parfait" },
-      { id: "fb_6", name: "Garlic Bread", category: "side", tags: [], allergens: ["gluten","dairy"], ytQuery: "garlic bread" },
+      { id: "fb_6", name: "Garlic Bread", category: "side", tags: [], allergens: ["gluten", "dairy"], ytQuery: "garlic bread" },
     ];
 
     const used = new Set<string>();
@@ -58,10 +58,18 @@ export async function POST(req: Request) {
     const callSingle = async (): Promise<any[]> => {
       try {
         const spinUrl = new URL("/api/spin", url);
+        // Pick a random category from the list, or default to "dinner"
+        const selectedCategory = cats.length > 0 ? cats[Math.floor(Math.random() * cats.length)] : "dinner";
+
         const r = await fetch(spinUrl.toString(), {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ categories: cats, powerups, constraints }),
+          body: JSON.stringify({
+            category: selectedCategory,
+            powerups,
+            allergens: constraints?.allergens || [], // Extract allergens from constraints
+            tags: constraints?.tags || []
+          }),
           cache: "no-store",
         });
         const j = await r.json().catch(() => ({}));

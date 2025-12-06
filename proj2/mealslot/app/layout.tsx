@@ -42,7 +42,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             <StackTheme>
               {/* Sticky header */}
               <div className="sticky top-0 z-50">
-                <HeaderClient />
+                <HeaderClient serverUser={null} />
               </div>
 
               {/* Page content */}

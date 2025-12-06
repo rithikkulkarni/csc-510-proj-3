@@ -1,4 +1,4 @@
-import { describe, it, expect, test, vi } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { weightedSpin } from "../../lib/scoring";
 import type { Dish } from "@/lib/schemas";
 
@@ -12,7 +12,7 @@ vi.mock("../../lib/rng", () => ({
   },
 }));
 
-test.skip("placeholder", () => {});
+// placeholder removed
 
 const makeDish = (
   id: string,

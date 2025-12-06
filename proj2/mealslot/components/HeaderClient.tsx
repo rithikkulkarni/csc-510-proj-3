@@ -1,60 +1,90 @@
-"use client";
+'use client';
 
 import Image from "next/image";
 import Link from "next/link";
+import { useEffect } from "react";
+import { usePathname } from "next/navigation";
 import { useUser } from "../app/context/UserContext";
 import UserMenu from "./UserMenu";
 import ThemeToggle from "./ThemeToggle";
 import { client } from "@/stack/client";
+import { Bungee, Sora } from "next/font/google";
 
-export default function HeaderClient() {
+// Bold, arcade-inspired font to match the slot theme
+const slotTitleFont = Bungee({ subsets: ["latin"], weight: "400" });
+const sloganFont = Sora({ subsets: ["latin"], weight: ["500"] });
+
+export default function HeaderClient({ serverUser }: { serverUser: any }) {
     const { user, setUser } = useUser();
-    const displayName = user?.name?.split(" ")[0] || "Guest";
+    const pathname = usePathname();
+    const isSoloMode = pathname === "/";
+    const isPartyMode = pathname?.startsWith("/party");
+
+    // Initialize user context on mount
+    useEffect(() => {
+        if (serverUser && !user) {
+            setUser(serverUser);
+        }
+    }, [serverUser, user, setUser]);
+
+    const displayName = user?.name?.split(' ')[0] || 'Guest';
     const isGuest = !user;
 
     const handleSignOut = () => {
-        const redirectTo = "/"; // homepage
+        const redirectTo = '/';
         if (client.urls.signOut) {
-            // ensure absolute URL
             const signOutUrl = new URL(client.urls.signOut, window.location.origin);
-            signOutUrl.searchParams.set("redirect_url", redirectTo);
+            signOutUrl.searchParams.set('redirect_url', redirectTo);
             window.location.href = signOutUrl.toString();
         } else {
-            // fallback for local logout
             setUser(null);
-            window.location.href = redirectTo; // redirect locally
+            window.location.href = redirectTo;
         }
     };
 
-
-
     return (
-        <header className="w-full flex flex-col md:flex-row justify-between items-center px-6 py-4 z-50 bg-white dark:bg-neutral-950 relative gap-3 md:gap-0">
-            {/* Left: Logo */}
-            <div className="flex items-center gap-6">
-                <Link href="/" className="inline-flex">
-                    <Image src="/logo.png" alt="logo" width={102} height={28} priority />
+        <header className="flex w-full items-center justify-between bg-[rgb(var(--card))] px-5 py-3 shadow-panel border-b border-[rgba(var(--card-border),0.85)] backdrop-blur">
+            <div className="flex items-center gap-3 md:gap-4">
+                <Link href="/" className="inline-flex items-center gap-3 md:gap-4">
+                    <Image src="/logo.png" alt="logo" width={110} height={32} priority />
+                    <div className="flex flex-col leading-tight">
+                        <span className={`${sloganFont.className} text-[11px] md:text-sm font-medium text-[rgb(var(--muted))]`}>
+                            The slot-inspired meal picker
+                        </span>
+                        <span
+                            className={`${slotTitleFont.className} text-4xl font-semibold tracking-tight md:text-5xl bg-gradient-to-r from-[#F2A93C] via-[#F6D365] to-[#F2A93C] bg-clip-text text-transparent`}
+                            style={{ WebkitTextStroke: "1px #6c7a84" }}
+                        >
+                            MealSlot
+                        </span>
+                    </div>
                 </Link>
             </div>
 
-            {/* Center / Right: Solo/Party + UserMenu */}
             <div className="flex items-center gap-3 md:gap-4">
-                <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
-                    Mode:
-                </span>
+                <span className="text-xs font-semibold uppercase tracking-wide text-[rgb(var(--muted))]">Mode</span>
                 <button
                     onClick={() => (window.location.href = "/")}
-                    className="px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700 transition text-sm"
+                    className={
+                        isSoloMode
+                            ? "rounded-full border-2 border-[#E5623A] bg-gradient-to-r from-[#E5623A] to-[#F1C04F] px-4 py-1.5 text-sm font-semibold text-[#0F1C24] shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md"
+                            : "rounded-full border border-[rgba(var(--card-border),0.9)] bg-[rgb(var(--card))] px-4 py-1.5 text-sm font-semibold text-[rgb(var(--fg))] shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md hover:border-[#E5623A]"
+                    }
                 >
                     Solo
                 </button>
                 <button
                     onClick={() => (window.location.href = "/party")}
-                    className="px-4 py-2 rounded-md bg-green-600 text-white hover:bg-green-700 transition text-sm"
+                    className={
+                        isPartyMode
+                            ? "rounded-full border-2 border-[#E5623A] bg-gradient-to-r from-[#E5623A] to-[#F1C04F] px-4 py-1.5 text-sm font-semibold text-[#0F1C24] shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md"
+                            : "rounded-full border border-[rgba(var(--card-border),0.9)] bg-[rgb(var(--card))] px-4 py-1.5 text-sm font-semibold text-[rgb(var(--fg))] shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md hover:border-[#E5623A]"
+                    }
                 >
                     Party
                 </button>
-                <div className="border-l border-neutral-300 dark:border-neutral-700 h-6" />
+
+                <div className="h-6 border-l border-[rgba(var(--card-border),0.7)]" />
 
                 {!isGuest && (
                     <div className="flex items-center gap-2">
@@ -64,12 +94,12 @@ export default function HeaderClient() {
 
                 {isGuest && (
                     <div className="flex items-center gap-2">
-                        <span className="text-sm text-neutral-700 dark:text-neutral-300">
+                        <span className="text-sm text-[rgb(var(--muted))]">
                             Welcome, Guest!
                         </span>
                         <Link
-                            href="/auth/callback?action=login"
-                            className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm transition"
+                            href={client.urls.signIn ?? "/handler/sign-in"}
+                            className="rounded-full border border-[#d6e4ea] bg-gradient-to-r from-[#E5623A] to-[#F1C04F] px-3 py-1 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
                         >
                             Sign In / Sign Up
                         </Link>

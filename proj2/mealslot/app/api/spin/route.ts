@@ -10,7 +10,8 @@ import { prisma } from "@/lib/db";
 
 const Body = z
   .object({
-    category: z.string().min(1).optional(),
+    category: z.string().min(1).optional(), // legacy single category
+    categories: z.array(z.string()).optional(), // new per-slot categories
     tags: z.array(z.string()).optional().default([]),
     allergens: z.array(z.string()).optional().default([]),
     locked: z
@@ -48,6 +49,7 @@ export async function POST(req: NextRequest) {
 
     const {
       category,
+      categories,
       tags,
       allergens,
       powerups,
@@ -55,6 +57,7 @@ export async function POST(req: NextRequest) {
       dishCount,
     } = parsed.data as {
       category?: string;
+      categories?: string[];
       tags: string[];
       allergens: string[];
       powerups: PowerUpsInput;
@@ -62,8 +65,15 @@ export async function POST(req: NextRequest) {
       dishCount?: number;
     };
 
-    if (!category) {
-      return Response.json({ message: "category is required" }, { status: 400 });
+    // Support both new categories array and legacy single category
+    const slotCategories = categories && categories.length > 0
+      ? categories
+      : category
+        ? Array(dishCount ?? 1).fill(category)
+        : [];
+
+    if (slotCategories.length === 0) {
+      return Response.json({ message: "category or categories is required" }, { status: 400 });
     }
 
     const lockedInput = (locked ?? []).flatMap((x) => {
@@ -73,9 +83,10 @@ export async function POST(req: NextRequest) {
     }) as Array<{ index: number; dishId: string }>;
 
     const reels: Dish[][] = [];
-    const count = dishCount ?? 1;
+    const count = dishCount ?? slotCategories.length;
     for (let i = 0; i < count; i++) {
-      const allDishes = await dishes(category, tags, allergens);
+      const slotCategory = slotCategories[i] || slotCategories[0] || "Dinner";
+      const allDishes = await dishes(slotCategory, tags, allergens);
       reels.push(allDishes);
     }
 

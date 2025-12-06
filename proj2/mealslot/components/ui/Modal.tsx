@@ -64,7 +64,7 @@ export default function Modal({ open, title, onClose, children }: ModalProps) {
         role="dialog"
         aria-modal="true"
         aria-labelledby="dialog-title"
-        className="max-h-[90vh] w-full max-w-3xl overflow-hidden rounded-2xl bg-white shadow-xl"
+        className="max-h-[90vh] w-full max-w-3xl overflow-hidden rounded-2xl border border-[rgba(var(--card-border),0.8)] bg-[rgb(var(--card))] text-brand-dusk shadow-xl dark:bg-[#0F1C24] dark:text-white"
       >
         <div className="flex items-center justify-between border-b px-4 py-3">
           <h3 id="dialog-title" className="text-base font-semibold">

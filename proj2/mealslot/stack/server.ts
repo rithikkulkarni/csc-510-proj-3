@@ -2,7 +2,7 @@ import { StackServerApp } from "@stackframe/stack";
 import { client } from "./client";
 
 export const server = new StackServerApp({
-  projectId: process.env.STACK_PROJECT_ID!,
+  projectId: process.env.STACK_PROJECT_ID || process.env.NEXT_PUBLIC_STACK_PROJECT_ID!,
   secretServerKey: process.env.STACK_SECRET_SERVER_KEY!,
-  inheritsFrom: client,     // ⭐ REQUIRED NOW
+  inheritsFrom: client,
 });

@@ -8,7 +8,8 @@ import { prisma } from "@/lib/db";
 
 const Body = z.object({
   code: z.string().length(6),
-  nickname: z.string().min(1).max(24).optional()
+  nickname: z.string().min(1).max(24).optional(),
+  auth_id: z.string().optional()
 });
 
 export async function POST(req: NextRequest) {
@@ -20,10 +21,25 @@ export async function POST(req: NextRequest) {
     const party = await prisma.party.findFirst({ where: { code: parsed.data.code, isActive: true } });
     if (!party) return Response.json({ code: "NOT_FOUND" }, { status: 404 });
 
+    // Get user allergens if auth_id provided
+    let userAllergens: string[] = [];
+    let userId: string | undefined;
+    if (parsed.data.auth_id) {
+      const user = await prisma.user.findUnique({ where: { auth_id: parsed.data.auth_id } });
+      if (user) {
+        userAllergens = user.allergens ?? [];
+        userId = user.id;
+      }
+    }
+
     const member = await prisma.partyMember.create({
       data: {
         partyId: party.id,
-        prefsJson: JSON.stringify({ nickname: parsed.data.nickname ?? "Guest" })
+        userId: userId,
+        prefsJson: JSON.stringify({
+          nickname: parsed.data.nickname ?? "Guest",
+          allergens: userAllergens
+        })
       }
     });
 

@@ -7,7 +7,8 @@ import { partyCodeFromSeed, PrefsSchema } from "@/lib/party";
 import { prisma } from "@/lib/db";
 
 const Body = z.object({
-  nickname: z.string().min(1).max(24).optional()
+  nickname: z.string().min(1).max(24).optional(),
+  auth_id: z.string().optional()
 });
 
 export async function POST(req: NextRequest) {
@@ -25,10 +26,25 @@ export async function POST(req: NextRequest) {
       }
     });
 
+    // Get user allergens if auth_id provided
+    let userAllergens: string[] = [];
+    let userId: string | undefined;
+    if (parsed.data.auth_id) {
+      const user = await prisma.user.findUnique({ where: { auth_id: parsed.data.auth_id } });
+      if (user) {
+        userAllergens = user.allergens ?? [];
+        userId = user.id;
+      }
+    }
+
     const member = await prisma.partyMember.create({
       data: {
         partyId: party.id,
-        prefsJson: JSON.stringify({ nickname: parsed.data.nickname ?? "Host" })
+        userId: userId,
+        prefsJson: JSON.stringify({
+          nickname: parsed.data.nickname ?? "Host",
+          allergens: userAllergens
+        })
       }
     });
 
