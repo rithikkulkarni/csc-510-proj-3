@@ -2,10 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { AccountSettings } from "@stackframe/stack";
-import { server } from "@/stack/server";
 import { client } from "@/stack/client";
 import { updateUserDetails } from "@/app/actions";
-import Link from "next/link";
 import DietaryPreferencesSection from "./DietaryPreferencesSection";
 
 // -------------------------

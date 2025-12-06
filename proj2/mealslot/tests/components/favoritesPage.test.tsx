@@ -9,7 +9,7 @@ vi.mock('@/app/context/UserContext', () => ({
     useUser: () => ({ user: null, setUser: mockSetUser, refreshUser: mockRefresh })
 }));
 
-import SavedMealsPage from '@/app/favorites/page';
+import SavedMealsPage from '../../app/favorites/page';
 
 describe('SavedMealsPage', () => {
     it('shows sign-in prompt when not signed in', async () => {

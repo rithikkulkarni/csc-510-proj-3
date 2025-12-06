@@ -1,8 +1,12 @@
+// stack/server.ts
+import "server-only";
 import { StackServerApp } from "@stackframe/stack";
-import { client } from "./client";
 
-export const server = new StackServerApp({
-  projectId: process.env.STACK_PROJECT_ID || process.env.NEXT_PUBLIC_STACK_PROJECT_ID!,
-  secretServerKey: process.env.STACK_SECRET_SERVER_KEY!,
-  inheritsFrom: client,
+export const stackServerApp = new StackServerApp({
+  tokenStore: "nextjs-cookie",
+  // You can add urls here if you want custom redirects, e.g.:
+  // urls: {
+  //   afterSignIn: "/",
+  //   afterSignUp: "/",
+  // },
 });

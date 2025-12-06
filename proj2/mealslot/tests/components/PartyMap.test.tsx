@@ -3,7 +3,7 @@ import React from "react";
 import { render } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import { describe, it, expect } from "vitest";
-import PartyMap from "@/components/PartyMap";
+import PartyMap from "../../components/PartyMap";
 
 describe("PartyMap", () => {
   it("renders a map container and injects the Google Maps script with the API key", () => {

@@ -10,7 +10,7 @@ vi.mock('next/navigation', () => ({
     useSearchParams: () => ({ get: (_: string) => null }),
 }));
 
-import PartyPage from '@/app/(site)/party/page';
+import PartyPage from '../../app/(site)/party/page';
 
 describe('Party page smoke', () => {
     it('renders header and code input', async () => {

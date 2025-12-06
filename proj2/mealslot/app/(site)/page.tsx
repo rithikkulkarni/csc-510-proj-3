@@ -38,7 +38,7 @@ type Venue = {
 type User = {
   name: string;
   id?: string;
-  auth_id?: string;
+  auth_id?: string | null;
   allergens?: string[];
   savedMeals?: string[];
 };

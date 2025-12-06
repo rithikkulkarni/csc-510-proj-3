@@ -1,6 +1,6 @@
 // tests/lib/rateLimit.test.ts
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { withRateLimit } from "@/lib/rateLimit"; // ⬅️ adjust path if needed
+import { withRateLimit } from "../../lib/rateLimit"; // ⬅️ adjust path if needed
 
 // These mirror the constants in rateLimit.ts
 const CAP = 20;

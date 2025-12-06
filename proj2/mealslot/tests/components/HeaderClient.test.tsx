@@ -26,7 +26,7 @@ vi.mock('next/font/google', () => ({
     Sora: (opts: any) => ({ className: 'sora' }),
 }));
 
-import HeaderClient from '@/components/HeaderClient';
+import HeaderClient from '../../components/HeaderClient';
 
 describe('HeaderClient', () => {
     beforeEach(() => {

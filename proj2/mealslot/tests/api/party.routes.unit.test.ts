@@ -21,12 +21,12 @@ vi.mock('@/lib/db', () => {
     return { prisma };
 });
 
-import * as Join from '@/app/api/party/join/route';
-import * as Leave from '@/app/api/party/leave/route';
-import * as State from '@/app/api/party/state/route';
-import * as Update from '@/app/api/party/update/route';
-import * as Spin from '@/app/api/party/spin/route';
-import { prisma } from '@/lib/db';
+import * as Join from '../../app/api/party/join/route';
+import * as Leave from '../../app/api/party/leave/route';
+import * as State from '../../app/api/party/state/route';
+import * as Update from '../../app/api/party/update/route';
+import * as Spin from '../../app/api/party/spin/route';
+import { prisma } from '../../lib/db';
 
 describe('party route unit tests', () => {
     beforeEach(() => vi.clearAllMocks());

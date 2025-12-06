@@ -1,6 +1,6 @@
 // tests/lib/rng.test.ts
 import { describe, it, expect } from "vitest";
-import { makeDeterministicRng } from "@/lib/rng"; // ⬅️ adjust path if needed
+import { makeDeterministicRng } from "../../lib/rng"; // ⬅️ adjust path if needed
 
 describe("makeDeterministicRng", () => {
   it("produces the same sequence for the same seed", () => {

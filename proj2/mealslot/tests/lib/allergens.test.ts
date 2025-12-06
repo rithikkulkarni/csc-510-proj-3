@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { normalizeAllergens } from "@/lib/allergens";
+import { normalizeAllergens } from "../../lib/allergens";
 
 describe("normalizeAllergens", () => {
     it("handles null/undefined", () => {

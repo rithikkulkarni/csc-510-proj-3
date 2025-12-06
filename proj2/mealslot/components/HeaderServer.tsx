@@ -1,5 +1,5 @@
 import HeaderClient from './HeaderClient';
-import { server } from '@/stack/server';
+import { stackServerApp } from '@/stack/server';
 import { ensureUserInDB, getUserDetails } from '@/app/actions';
 
 export default async function HeaderServer() {
@@ -7,7 +7,7 @@ export default async function HeaderServer() {
 
     try {
         // Get current authenticated Neon user (server)
-        const neonUser = await server.getUser();
+        const neonUser = await stackServerApp.getUser();
 
         if (neonUser) {
             // Ensure user exists in DB

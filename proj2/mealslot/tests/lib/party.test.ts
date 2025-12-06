@@ -4,7 +4,7 @@ import {
   partyCodeFromSeed,
   PrefsSchema,
   DietEnum,
-} from "@/lib/party"; // ⬅️ adjust to your actual path if needed
+} from "../../lib/party"; // ⬅️ adjust to your actual path if needed
 
 type Prefs = {
   nickname?: string;

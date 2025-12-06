@@ -10,7 +10,7 @@ vi.mock('@/app/context/UserContext', () => ({
 // Mock fetch for /api/dishes
 (globalThis as any).fetch = vi.fn(() => Promise.resolve({ ok: true, json: () => Promise.resolve([{ id: 'm1', name: 'Taco', category: 'Dinner' }]) }));
 
-import SavedMealsPage from '@/app/favorites/page';
+import SavedMealsPage from '../../app/favorites/page';
 
 describe('SavedMealsPage (signed-in)', () => {
     it('renders saved meal items when user has savedMeals', async () => {

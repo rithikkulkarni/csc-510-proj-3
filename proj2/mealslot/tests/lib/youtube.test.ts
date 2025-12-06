@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 // Stub "server-only" so it doesn't break in Vitest env
 vi.mock("server-only", () => ({}));
 
-import { videoStubsFor, type YtStub } from "@/lib/youtube"; // ⬅️ adjust path if needed
+import { videoStubsFor, type YtStub } from "../../lib/youtube"; // ⬅️ adjust path if needed
 
 const YT_SEARCH_URL = "https://www.googleapis.com/youtube/v3/search";
 
