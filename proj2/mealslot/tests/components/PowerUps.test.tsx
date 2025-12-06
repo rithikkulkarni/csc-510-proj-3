@@ -30,7 +30,7 @@ const labels = {
 // Test helper: always provide a value object and an onChange callback
 function renderPU(
   value: Partial<PU> = {},
-  onChange: (v: PU) => void = () => {}
+  onChange: (v: PU) => void = () => { }
 ) {
   return render(<PowerUps value={value} onChange={onChange} />);
 }
@@ -94,29 +94,8 @@ describe("PowerUps component", () => {
     expect(payload?.max30m).toBe(true);
   });
 
-  it.skip("7) toggling the same button twice returns it to unpressed and updates onChange each time", async () => {
-    const onChange = vi.fn();
-    renderPU({}, onChange);
-
-    const btn = screen.getByRole("button", { name: labels.healthy });
-    await user.click(btn);
-    await user.click(btn);
-
-    expect(onChange).toHaveBeenCalledTimes(2);
-    const second = onChange.mock.calls[1]?.[0];
-    expect(second?.healthy).toBe(false);
-  });
-
-  it.skip("8) multiple toggles accumulate state (Healthy then Cheap)", async () => {
-    const onChange = vi.fn();
-    renderPU({}, onChange);
-
-    await user.click(screen.getByRole("button", { name: labels.healthy }));
-    await user.click(screen.getByRole("button", { name: labels.cheap }));
-
-    const last = onChange.mock.calls.at(-1)?.[0];
-    expect(last).toMatchObject({ healthy: true, cheap: true });
-  });
+  // Removed two skipped interaction tests (7,8). These can be reintroduced
+  // as active tests after flakiness is resolved or when finalized.
 
   it("11) preserves other flags when one is toggled off", async () => {
     const onChange = vi.fn();
@@ -142,7 +121,7 @@ describe("PowerUps component", () => {
 
   it("16) does not crash if onChange is omitted (no-op)", async () => {
     // still supply a no-op; component requires the prop
-    renderPU({ healthy: false, cheap: false, max30m: false }, () => {});
+    renderPU({ healthy: false, cheap: false, max30m: false }, () => { });
     await user.click(screen.getByRole("button", { name: labels.healthy }));
     // no assertion: test passes if no error is thrown
   });

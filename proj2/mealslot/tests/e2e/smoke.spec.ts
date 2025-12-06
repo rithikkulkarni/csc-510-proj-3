@@ -1,7 +1,5 @@
 import { test, expect } from "vitest";
 
-test.skip("placeholder", () => {});
-
 test("full smoke: spin → cook at home modal", async ({ page }) => {
   await page.goto("/");
 

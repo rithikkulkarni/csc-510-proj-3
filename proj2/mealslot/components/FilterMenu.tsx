@@ -2,65 +2,109 @@
 
 import { useState, useEffect } from "react";
 import { useUser } from "../app/context/UserContext";
+import { cn } from "./ui/cn";
+import { categoryPillBase } from "./ui/style";
 
 type FilterMenuProps = {
-  data: {
-    allergens: string[];
-    categories: string[];
+  data?: {
+    tags?: string[];
+    allergens?: string[];
   };
-  onAllergenChange: (selected: string[]) => void;
-  onCategoryChange: (selected: string[]) => void;
+  onTagChange?: (selected: string[]) => void;
+  onAllergenChange?: (selected: string[]) => void;
 };
 
-export default function FilterMenu({
-  data,
-  onAllergenChange,
-  onCategoryChange,
-}: FilterMenuProps) {
+export default function FilterMenu({ data, onTagChange = () => { }, onAllergenChange = () => { } }: FilterMenuProps) {
   const { user } = useUser();
 
+  const [tags, setTags] = useState<string[]>(data?.tags ?? []);
+  const [allergens, setAllergens] = useState<string[]>(data?.allergens ?? []);
+
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [selectedAllergens, setSelectedAllergens] = useState<string[]>([]);
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+
+  // Fetch filters if no `data` prop was provided (tests mock global.fetch)
+  useEffect(() => {
+    if (data) return;
+
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const res = await fetch("/api/filters");
+        if (!res.ok) throw new Error("bad response");
+        const json = await res.json();
+        if (cancelled) return;
+        setTags(json.tags ?? []);
+        setAllergens(json.allergens ?? []);
+      } catch (err) {
+        console.error("Failed to fetch filters:", err);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [data]);
 
   // Initialize selections based on user preferences and available options
   useEffect(() => {
-    if (!data.allergens || data.allergens.length === 0) return;
+    if (!allergens || allergens.length === 0) return;
 
-    // User allergens intersected with available allergens
     const userAllergens = user?.allergens ?? [];
-    const validAllergens = data.allergens.filter(a => userAllergens.includes(a));
+    const validAllergens = allergens.filter((a) => userAllergens.includes(a));
     setSelectedAllergens(validAllergens);
     onAllergenChange(validAllergens);
-
-    // Optionally initialize categories if you have a user preference for tags
-    // setSelectedCategories(data.categories); // Uncomment if needed
-  }, [user, data.allergens, onAllergenChange]);
+  }, [user, JSON.stringify(allergens), onAllergenChange]);
 
   const toggleAllergen = (allergen: string) => {
     const updated = selectedAllergens.includes(allergen)
-      ? selectedAllergens.filter(a => a !== allergen)
+      ? selectedAllergens.filter((a) => a !== allergen)
       : [...selectedAllergens, allergen];
 
     setSelectedAllergens(updated);
     onAllergenChange(updated);
   };
 
-  const toggleCategory = (category: string) => {
-    const updated = selectedCategories.includes(category)
-      ? selectedCategories.filter(c => c !== category)
-      : [...selectedCategories, category];
-
-    setSelectedCategories(updated);
-    onCategoryChange(updated);
+  const toggleTag = (tag: string) => {
+    const updated = selectedTags.includes(tag) ? selectedTags.filter((t) => t !== tag) : [...selectedTags, tag];
+    setSelectedTags(updated);
+    onTagChange(updated);
   };
 
   return (
     <div className="space-y-4">
-      {/* Allergens */}
-      <div>
-        <h4 className="font-semibold">Allergens</h4>
-        <div className="flex flex-wrap gap-2">
-          {data.allergens.map(allergen => {
+      <h2 className="text-lg font-semibold">Filters</h2>
+
+      <details>
+        <summary className="font-medium">Tags</summary>
+        <div className="mt-2 flex flex-wrap gap-2">
+          {tags.map((tag) => {
+            const active = selectedTags.includes(tag);
+            return (
+              <button
+                key={tag}
+                type="button"
+                aria-pressed={active}
+                onClick={() => toggleTag(tag)}
+                className={cn(
+                  categoryPillBase,
+                  active
+                    ? "bg-neutral-900 border-transparent bg-gradient-to-r from-brand-coral to-brand-gold text-brand-dusk shadow-glow"
+                    : "text-brand-dusk hover:text-brand-dusk hover:border-brand-gold/80 dark:text-white/80 dark:hover:text-white"
+                )}
+              >
+                {tag}
+              </button>
+            );
+          })}
+        </div>
+      </details>
+
+      <details>
+        <summary className="font-medium">Allergens</summary>
+        <div className="mt-2 flex flex-wrap gap-2">
+          {allergens.map((allergen) => {
             const active = selectedAllergens.includes(allergen);
             return (
               <button
@@ -68,41 +112,19 @@ export default function FilterMenu({
                 type="button"
                 aria-pressed={active}
                 onClick={() => toggleAllergen(allergen)}
-                className={`px-3 py-1 rounded border ${active
-                    ? "bg-blue-600 text-white border-blue-600"
-                    : "bg-white dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 border-neutral-300 dark:border-neutral-700"
-                  }`}
+                className={cn(
+                  categoryPillBase,
+                  active
+                    ? "border-transparent bg-gradient-to-r from-brand-coral to-brand-gold text-brand-dusk shadow-glow"
+                    : "text-brand-dusk hover:text-brand-dusk hover:border-brand-gold/80 dark:text-white/80 dark:hover:text-white"
+                )}
               >
-                {allergen} {active && "✓"}
+                {allergen}
               </button>
             );
           })}
         </div>
-      </div>
-
-      {/* Categories */}
-      <div>
-        <h4 className="font-semibold">Categories</h4>
-        <div className="flex flex-wrap gap-2">
-          {data.categories.map(category => {
-            const active = selectedCategories.includes(category);
-            return (
-              <button
-                key={category}
-                type="button"
-                aria-pressed={active}
-                onClick={() => toggleCategory(category)}
-                className={`px-3 py-1 rounded border ${active
-                    ? "bg-green-600 text-white border-green-600"
-                    : "bg-white dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 border-neutral-300 dark:border-neutral-700"
-                  }`}
-              >
-                {category} {active && "✓"}
-              </button>
-            );
-          })}
-        </div>
-      </div>
+      </details>
     </div>
   );
 }

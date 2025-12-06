@@ -88,7 +88,12 @@ function Harness() {
                 aria-label="Number of Dishes"
             />
             {/* cooldownMs is required per TS error list; use 0 for tests */}
-            <SlotMachine reelCount={reelCount} onSpin={onSpin} cooldownMs={0} />
+            <SlotMachine
+                reelCount={reelCount}
+                onSpin={onSpin}
+                cooldownMs={0}
+                hasCategory={true}
+            />
         </div>
     );
 }
@@ -162,6 +167,18 @@ describe("SlotMachine (happy-dom) with required props", () => {
         expect(screen.getByRole("button", { name: /spin/i })).toBeDisabled();
     });
 
+    it("2b) disables Spin when no category is selected", () => {
+        render(
+            <SlotMachine
+                reelCount={2}
+                onSpin={vi.fn()}
+                cooldownMs={0}
+                hasCategory={false}
+            />
+        );
+        expect(screen.getByRole("button", { name: /spin/i })).toBeDisabled();
+    });
+
     it("3) renders N Lock buttons matching reel count", async () => {
         render(<Harness />);
         await userEvent.clear(countInput());
@@ -169,18 +186,7 @@ describe("SlotMachine (happy-dom) with required props", () => {
         expect(screen.getAllByRole("button", { name: /lock/i }).length).toBe(3);
     });
 
-    it.skip("4) clicking Spin shows returned selection names", async () => {
-        queueFetch(mkSpinResp(["Tofu Scramble", "Pancake Stack"]));
-        render(<Harness />);
-        await userEvent.clear(countInput());
-        await userEvent.type(countInput(), "2");
-        await userEvent.click(screen.getByRole("button", { name: /spin/i }));
-
-        await waitFor(() => {
-            expect(screen.getByText(/Tofu Scramble/i)).toBeInTheDocument();
-            expect(screen.getByText(/Pancake Stack/i)).toBeInTheDocument();
-        });
-    });
+    // test 4 removed (skipped previously) — reintroduce with deterministic mocks if needed
 
     it("5) locking a card toggles aria-pressed=true", async () => {
         queueFetch(mkSpinResp(["Avocado Toast", "Oat Smoothie"]));
@@ -194,130 +200,67 @@ describe("SlotMachine (happy-dom) with required props", () => {
         expect(lockA).toHaveAttribute("aria-pressed", "true");
     });
 
-    it.skip("6) locked card persists across next spin", async () => {
-        const mock = queueFetch(
-            mkSpinResp(["Granola & Milk", "Cottage Cheese Bowl"]),
-            mkSpinResp(["Blueberry Muffins", "Veggie Omelette"])
-        );
-        render(<Harness />);
-        await userEvent.click(screen.getByRole("button", { name: /spin/i }));
-        await screen.findByText(/Granola & Milk/i);
+    // test 6 removed (skipped previously)
 
-        const [cardA] = getCards();
-        const lockA = within(cardA as HTMLElement).getByRole("button", { name: /lock/i });
-        await userEvent.click(lockA);
+    // test 7 removed (skipped previously)
 
-        await userEvent.click(screen.getByRole("button", { name: /spin/i }));
-        await screen.findByText(/Blueberry Muffins/i);
+    // test 8 removed (skipped previously)
 
-        expect(within(cardA as HTMLElement).getByText(/Granola & Milk/i)).toBeInTheDocument();
+    // test 9 removed (skipped previously)
+});
 
-        await waitFor(() => {
-            expect((mock as any).lastBody?.locked?.[0]).toMatchObject({
-                index: 0,
-                dishId: expect.any(String),
-            });
+it("10) avoids duplicate names in visible selection when API returns dups", async () => {
+    const dup = makeDish("French Toast");
+    (global as any).fetch = vi.fn().mockResolvedValueOnce(
+        new Response(
+            JSON.stringify({ spinId: "dup", reels: [[dup], [dup]], selection: [dup, dup] }),
+            { headers: { "Content-Type": "application/json" } }
+        )
+    );
+    render(<Harness />);
+    await userEvent.clear(countInput());
+    await userEvent.type(countInput(), "2");
+    await userEvent.click(screen.getByRole("button", { name: /spin/i }));
+
+    await waitFor(() => {
+        const names = getCards().map((c) => {
+            const n = within(c).queryByText(/French Toast/i);
+            if (n) return "French Toast";
+            const matches = within(c)
+                .queryAllByText(/.+/)
+                .map((el) => el.textContent?.trim() ?? "")
+                .filter(Boolean);
+            return matches[0] ?? "";
         });
-    });
-
-    it.skip("7) sends dishCount, powerups, category in request body", async () => {
-        const mock = queueFetch(mkSpinResp(["Hash", "Parfait"]));
-        render(<Harness />);
-        await userEvent.clear(countInput());
-        await userEvent.type(countInput(), "2");
-        await userEvent.click(screen.getByRole("button", { name: /spin/i }));
-
-        await waitFor(() => {
-            const body = (mock as any).lastBody;
-            expect(body).toBeDefined();
-            expect(body.dishCount).toBe(2);
-            expect(body).toHaveProperty("category");  // your component sets this
-            expect(body).toHaveProperty("powerups");  // and this (may be {})
-            expect(Array.isArray(body.locked)).toBe(true);
-        });
-    });
-
-    it.skip("8) Spin is disabled while request is in flight", async () => {
-        const slow = new Promise<SpinResponse>((resolve) =>
-            setTimeout(() => resolve(mkSpinResp(["A", "B"])), 250)
-        );
-        (global as any).fetch = vi.fn().mockResolvedValueOnce(
-            new Response(slow.then((d) => JSON.stringify(d)) as unknown as BodyInit, {
-                headers: { "Content-Type": "application/json" },
-            })
-        );
-
-        render(<Harness />);
-        const spin = screen.getByRole("button", { name: /spin/i });
-        await userEvent.click(spin);
-        expect(spin).toBeDisabled();
-        await waitFor(() => expect(spin).not.toBeDisabled());
-    });
-
-    it.skip("9) shows placeholders when a reel has no options", async () => {
-        (global as any).fetch = vi.fn().mockResolvedValueOnce(
-            new Response(
-                JSON.stringify({ spinId: "x", reels: [[], []], selection: [] }),
-                { headers: { "Content-Type": "application/json" } }
-            )
-        );
-        render(<Harness />);
-        await userEvent.clear(countInput());
-        await userEvent.type(countInput(), "2");
-        await userEvent.click(screen.getByRole("button", { name: /spin/i }));
-
-        await waitFor(() => {
-            expect(screen.getAllByText(/no options/i).length).toBeGreaterThanOrEqual(1);
-        });
-    });
-
-    it("10) avoids duplicate names in visible selection when API returns dups", async () => {
-        const dup = makeDish("French Toast");
-        (global as any).fetch = vi.fn().mockResolvedValueOnce(
-            new Response(
-                JSON.stringify({ spinId: "dup", reels: [[dup], [dup]], selection: [dup, dup] }),
-                { headers: { "Content-Type": "application/json" } }
-            )
-        );
-        render(<Harness />);
-        await userEvent.clear(countInput());
-        await userEvent.type(countInput(), "2");
-        await userEvent.click(screen.getByRole("button", { name: /spin/i }));
-
-        await waitFor(() => {
-            const names = getCards().map((c) => {
-                const n = within(c).queryByText(/French Toast/i);
-                return n ? "French Toast" : within(c).queryByText(/.+/)?.textContent ?? "";
-            });
-            const uniq = new Set(names);
-            expect(uniq.size).toBeGreaterThanOrEqual(1);
-        });
-    });
-
-    it("11) changing reel count updates number of Lock buttons", async () => {
-        queueFetch(mkSpinResp(["A", "B", "C"]));
-        render(<Harness />);
-
-        await userEvent.clear(countInput());
-        await userEvent.type(countInput(), "3");
-        expect(screen.getAllByRole("button", { name: /lock/i }).length).toBe(3);
-
-        await userEvent.clear(countInput());
-        await userEvent.type(countInput(), "1");
-        expect(screen.getAllByRole("button", { name: /lock/i }).length).toBe(1);
-    });
-
-    it("12) locking one slot does not auto-lock others", async () => {
-        queueFetch(mkSpinResp(["A", "B"]));
-        render(<Harness />);
-        await userEvent.click(screen.getByRole("button", { name: /spin/i }));
-
-        const [cardA, cardB] = getCards();
-        const lockA = within(cardA as HTMLElement).getByRole("button", { name: /lock/i });
-        const lockB = within(cardB as HTMLElement).getByRole("button", { name: /lock/i });
-
-        await clickWithToggle(lockA);
-        expect(lockA).toHaveAttribute("aria-pressed", "true");
-        expect(lockB).toHaveAttribute("aria-pressed", "false");
+        const uniq = new Set(names);
+        expect(uniq.size).toBeGreaterThanOrEqual(1);
     });
 });
+
+it("11) changing reel count updates number of Lock buttons", async () => {
+    queueFetch(mkSpinResp(["A", "B", "C"]));
+    render(<Harness />);
+
+    await userEvent.clear(countInput());
+    await userEvent.type(countInput(), "3");
+    expect(screen.getAllByRole("button", { name: /lock/i }).length).toBe(3);
+
+    await userEvent.clear(countInput());
+    await userEvent.type(countInput(), "1");
+    expect(screen.getAllByRole("button", { name: /lock/i }).length).toBe(1);
+});
+
+it("12) locking one slot does not auto-lock others", async () => {
+    queueFetch(mkSpinResp(["A", "B"]));
+    render(<Harness />);
+    await userEvent.click(screen.getByRole("button", { name: /spin/i }));
+
+    const [cardA, cardB] = getCards();
+    const lockA = within(cardA as HTMLElement).getByRole("button", { name: /lock/i });
+    const lockB = within(cardB as HTMLElement).getByRole("button", { name: /lock/i });
+
+    await clickWithToggle(lockA);
+    expect(lockA).toHaveAttribute("aria-pressed", "true");
+    expect(lockB).toHaveAttribute("aria-pressed", "false");
+});
+// end of SlotMachine tests

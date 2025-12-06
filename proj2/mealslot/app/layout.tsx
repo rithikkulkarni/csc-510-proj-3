@@ -1,8 +1,8 @@
 // app/layout.tsx
-import { StackProvider, StackTheme } from "@stackframe/stack";
-import { client } from "../stack/client";
 import "./globals.css";
 import type { ReactNode } from "react";
+import { StackProvider, StackTheme } from "@stackframe/stack";
+import { stackServerApp } from "@/stack/server"; // or "../stack/server" if not using alias
 import HeaderClient from "@/components/HeaderClient";
 import { UserProvider } from "./context/UserContext";
 
@@ -38,11 +38,11 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       </head>
       <body className="min-h-screen bg-white text-neutral-900 dark:bg-neutral-950 dark:text-neutral-100">
         <UserProvider>
-          <StackProvider app={client}>
+          <StackProvider app={stackServerApp}>
             <StackTheme>
               {/* Sticky header */}
               <div className="sticky top-0 z-50">
-                <HeaderClient />
+                <HeaderClient serverUser={null} />
               </div>
 
               {/* Page content */}

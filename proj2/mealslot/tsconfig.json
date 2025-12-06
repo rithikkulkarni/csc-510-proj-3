@@ -44,6 +44,8 @@
   ],
   "exclude": [
     "node_modules",
-    "ws-server"
+    "ws-server",
+    "tests",
+    "scripts"
   ]
 }

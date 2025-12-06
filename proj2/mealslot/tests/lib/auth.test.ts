@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { getMockUser } from "@/lib/auth";
+import { getMockUser } from "../../lib/auth";
 
 describe("getMockUser", () => {
   it("returns a user with the expected fixed values", () => {

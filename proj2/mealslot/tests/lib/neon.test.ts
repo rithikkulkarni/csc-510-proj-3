@@ -19,7 +19,7 @@ describe("lib/neon", () => {
 
   it("throws if DATABASE_URL is not set", async () => {
     // DATABASE_URL is undefined from beforeEach
-    await expect(import("@/lib/neon")).rejects.toThrow(
+    await expect(import("../../lib/neon")).rejects.toThrow(
       "DATABASE_URL is not set",
     );
   });
@@ -28,7 +28,7 @@ describe("lib/neon", () => {
     process.env.DATABASE_URL = "postgres://example-db-url";
 
     // Import after setting env so the top-level code sees it
-    const { client } = await import("@/lib/neon");
+    const { client } = await import("../../lib/neon");
 
     // Grab the mocked neon function to assert on calls
     const { neon } = await import("@neondatabase/serverless");

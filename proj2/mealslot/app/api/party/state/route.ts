@@ -19,7 +19,10 @@ export async function GET(req: NextRequest) {
     const party = await prisma.party.findFirst({ where: { code: parsed.data.code } });
     if (!party) return Response.json({ code: "NOT_FOUND" }, { status: 404 });
 
-    const members = await prisma.partyMember.findMany({ where: { partyId: party.id } });
+    const members = await prisma.partyMember.findMany({
+      where: { partyId: party.id },
+      include: { user: { select: { allergens: true } } }
+    });
 
     const resp = {
       party: {
@@ -46,9 +49,16 @@ export async function GET(req: NextRequest) {
         })(),
         prefs: (() => {
           try {
-            return PrefsSchema.parse(JSON.parse(m.prefsJson));
+            const parsed = PrefsSchema.parse(JSON.parse(m.prefsJson));
+            // If prefs do not include allergens but the linked user has them, hydrate from User table
+            if ((!parsed.allergens || parsed.allergens.length === 0) && m.user?.allergens?.length) {
+              return { ...parsed, allergens: m.user.allergens };
+            }
+            return parsed;
           } catch {
-            return {};
+            // As a fallback, still attempt to surface user allergens to keep party protection safe
+            const userAllergens = m.user?.allergens ?? [];
+            return userAllergens.length ? { allergens: userAllergens } : {};
           }
         })()
       }))

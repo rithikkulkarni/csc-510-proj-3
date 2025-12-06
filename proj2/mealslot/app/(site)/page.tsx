@@ -5,14 +5,13 @@ import { useEffect, useMemo, useState } from "react";
 import { SlotMachine } from "@/components/SlotMachine";
 import { PowerUps } from "@/components/PowerUps";
 import FilterMenu from "@/components/FilterMenu";
-import DishCountInput from "@/components/DishCountInput";
+
 import { Dish, PowerUpsInput, RecipeJSON } from "@/lib/schemas";
 import { cn } from "@/components/ui/cn";
 import Modal from "@/components/ui/Modal";
 import MapWithPins from "@/components/MapWithPins";
 import VideoPanel, { Video } from "@/components/VideoPanel";
-import { client } from "@/stack/client";
-import { getUserDetails, getAllAllergens } from "../actions";
+import { getUserDetails, getAllAllergens, updateUserDetails } from "../actions";
 import {
   shellClass,
   contentClass,
@@ -21,6 +20,7 @@ import {
   sectionSubtitleClass,
   categoryPillBase,
 } from "../../components/ui/style";
+import { client } from "@/stack/client";
 
 // -------------------------
 // Types
@@ -35,19 +35,26 @@ type Venue = {
   cuisine: string;
   distance_km: number;
 };
-type User = { name: string };
+type User = {
+  name: string;
+  id?: string;
+  auth_id?: string | null;
+  allergens?: string[];
+  savedMeals?: string[];
+};
 
 // -------------------------
 // HomePage
 // -------------------------
 function HomePage() {
   const [user, setUser] = useState<User | null>(null);
-  const [category, setCategory] = useState<string>("Breakfast");
-  const [dishCount, setDishCount] = useState(0);
+  const DISH_COUNT = 3; // Fixed at 3 for actual slot machine behavior
+  const [slotCategories, setSlotCategories] = useState<string[]>(["Breakfast", "Lunch", "Dinner"]);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [selectedAllergens, setSelectedAllergens] = useState<string[]>([]);
+  const [savedMeals, setSavedMeals] = useState<string[]>([]);
   const [allAllergens, setAllAllergens] = useState<string[]>([]);
-  const [allCategories] = useState<string[]>(["Breakfast", "Lunch", "Dinner", "Dessert"]);
+  const [allCategories] = useState<string[]>(["Breakfast", "Lunch", "Dinner", "Dessert", "Snack"]);
   const [powerups, setPowerups] = useState<PowerUpsInput>({});
   const [selection, setSelection] = useState<Dish[]>([]);
   const [busy, setBusy] = useState(false);
@@ -62,16 +69,36 @@ function HomePage() {
   // -------------------------
   useEffect(() => {
     async function fetchUser() {
+      const savedProfile = localStorage.getItem('userProfile');
+      if (savedProfile) {
+        const parsed = JSON.parse(savedProfile);
+        setUser(parsed);
+        setSelectedAllergens(Array.isArray(parsed?.allergens) ? parsed.allergens : []);
+        setSavedMeals(Array.isArray(parsed?.savedMeals) ? parsed.savedMeals : []);
+        return;
+      }
+
+
       const neonUser = await client.getUser();
       if (neonUser) {
         const profile = await getUserDetails(neonUser.id);
-        setUser({ name: profile?.name || "User" });
-      } else if (localStorage.getItem("guestUser")) {
-        setUser({ name: "Guest" });
+        if (profile) {
+          setUser(profile);
+          setSelectedAllergens(Array.isArray(profile.allergens) ? profile.allergens : []);
+          setSavedMeals(Array.isArray(profile.savedMeals) ? profile.savedMeals : []);
+          localStorage.setItem("userProfile", JSON.stringify(profile));
+        }
+
+      } else if (localStorage.getItem('guestUser')) {
+        setUser({ name: 'Guest' });
       }
     }
+
     fetchUser();
   }, []);
+
+
+
 
   // -------------------------
   // Load all allergens
@@ -91,8 +118,50 @@ function HomePage() {
 
   const handleSignOut = () => {
     localStorage.removeItem("guestUser");
+    localStorage.removeItem("userProfile"); // clear Neon Auth profile
     setUser(null);
   };
+
+  const toggleSavedMeal = async (dish: Dish) => {
+    const next = (() => {
+      if (savedMeals.includes(dish.id)) {
+        return savedMeals.filter((id) => id !== dish.id);
+      }
+      return [...savedMeals, dish.id];
+    })();
+
+    // Optimistic update
+    setSavedMeals(next);
+    localStorage.setItem("savedMeals", JSON.stringify(next));
+
+    // Keep cached profile in sync if it exists
+    const cached = localStorage.getItem("userProfile");
+    if (cached) {
+      try {
+        const parsed = JSON.parse(cached);
+        parsed.savedMeals = next;
+        localStorage.setItem("userProfile", JSON.stringify(parsed));
+      } catch (e) {
+        console.warn("Failed to sync saved meals to cached profile", e);
+      }
+    }
+
+    // Persist to DB for authenticated users
+    const authId = (user as any)?.auth_id || (user as any)?.id;
+    if (authId) {
+      try {
+        const updated = await updateUserDetails(authId, { savedMeals: next });
+        if (updated?.savedMeals) {
+          setSavedMeals(updated.savedMeals);
+          setUser((prev) => (prev ? { ...prev, savedMeals: updated.savedMeals } : prev));
+          localStorage.setItem("userProfile", JSON.stringify({ ...(cached ? JSON.parse(cached) : {}), savedMeals: updated.savedMeals }));
+        }
+      } catch (err) {
+        console.error("Failed to persist saved meals", err);
+      }
+    }
+  };
+
 
   // -------------------------
   // Derived cuisines
@@ -118,18 +187,28 @@ function HomePage() {
   // -------------------------
   // Slot machine spin & other logic
   // -------------------------
+  const dedupeSelection = (items: Dish[]) => {
+    const seen = new Set<string>();
+    return items.filter((d) => {
+      const key = d?.id || `${d?.name}-${d?.category}`;
+      if (!key || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  };
+
   const onSpin = async (locked: { index: number; dishId: string }[]) => {
     setBusy(true);
     const res = await fetch("/api/spin", {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
-        category,
+        categories: slotCategories, // array of categories per slot
         tags: selectedTags,
         allergens: selectedAllergens,
         locked,
         powerups,
-        dishCount,
+        dishCount: DISH_COUNT,
       }),
     });
     setBusy(false);
@@ -139,12 +218,13 @@ function HomePage() {
       return;
     }
     const data = await res.json();
-    setSelection(data.selection);
+    const uniqueSelection = dedupeSelection(data.selection ?? []);
+    setSelection(uniqueSelection);
     setRecipes(null);
     setVenues(null);
     setOpenVideoModal(false);
     setCooldownMs(3000);
-    await fetchVideos(data.selection);
+    await fetchVideos(uniqueSelection);
   };
 
   // Fetch videos
@@ -189,7 +269,66 @@ function HomePage() {
   return (
     <div className={shellClass}>
       <div className={contentClass}>
-        <header className="flex flex-col md:flex-row md:justify-between md:items-center gap-3"> <div> <h1 className="text-2xl md:text-3xl font-semibold text-neutral-900"> What should we eat today? </h1> <p className="text-sm md:text-base text-neutral-600"> Spin the slots, tweak your filters, and let MealSlot pick your next meal—cook at home or find a spot nearby. </p> </div> </header> {/* Category selection */} <section className={cardClass}> <div className="flex items-center justify-between gap-3"> <h2 className={sectionTitleClass}>Choose Category</h2> <span className="rounded-full bg-orange-50 px-3 py-1 text-xs font-medium text-orange-700"> Step 1 · Pick the vibe </span> </div> <div className="mt-3 flex flex-wrap gap-2"> {["Breakfast", "Lunch", "Dinner", "Dessert"].map((c) => { const active = category === c.toLowerCase(); return (<button key={c.toLowerCase()} className={cn(categoryPillBase, active ? "border-transparent bg-gradient-to-r from-orange-500 to-rose-500 text-white shadow-sm hover:shadow-md" : "border-neutral-200 bg-white/90 text-neutral-700 hover:border-neutral-300 hover:bg-neutral-50 hover:text-neutral-900",)} onClick={() => setCategory((prev) => prev === c.toLowerCase() ? "" : c.toLowerCase(),)} aria-pressed={active} > {c} </button>); })} </div> </section>
+        <header className={cn(cardClass, "flex flex-col gap-3")}
+        >
+          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-brand-dusk/80 dark:text-brand-glow/90">
+            <span className="rounded-full bg-gradient-to-r from-brand-coral to-brand-gold px-2 py-1 text-brand-dusk shadow-soft">Solo</span>
+            <span>Spin &amp; Savor</span>
+          </div>
+          <div className="space-y-2">
+            <h1 className="text-3xl md:text-4xl font-semibold text-brand-dusk dark:text-white">
+              What should we eat today?
+            </h1>
+            <p className="text-sm md:text-base text-brand-dusk/80 dark:text-brand-glow/80">
+              Spin the reels, lock your favorites, and let MealSlot pick your next bite—cook at home or find a spot nearby.
+            </p>
+          </div>
+        </header>
+
+        {/* Category selection - now handled per-slot */}
+        <section className={cardClass}>
+          <div className="flex items-center justify-between gap-3">
+            <h2 className={sectionTitleClass}>Categories</h2>
+            <span className="rounded-full bg-gradient-to-r from-brand-coral to-brand-gold px-3 py-1 text-xs font-semibold text-brand-dusk shadow-soft">
+              Step 1 · Customize each slot
+            </span>
+          </div>
+          <p className="mt-2 text-sm text-brand-dusk/70 dark:text-brand-glow/80">
+            Pick a category for each slot above the reels below, or use the quick presets:
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button
+              className={cn(categoryPillBase, "text-brand-dusk hover:border-brand-gold/80 dark:text-white/80")}
+              onClick={() => setSlotCategories(["Breakfast", "Lunch", "Dinner"])}
+            >
+              🍳 Full Day
+            </button>
+            <button
+              className={cn(categoryPillBase, "text-brand-dusk hover:border-brand-gold/80 dark:text-white/80")}
+              onClick={() => setSlotCategories(["Dinner", "Dinner", "Dessert"])}
+            >
+              🍽️ Dinner + Dessert
+            </button>
+            <button
+              className={cn(categoryPillBase, "text-brand-dusk hover:border-brand-gold/80 dark:text-white/80")}
+              onClick={() => setSlotCategories(["Lunch", "Lunch", "Lunch"])}
+            >
+              🥗 All Lunch
+            </button>
+            <button
+              className={cn(categoryPillBase, "text-brand-dusk hover:border-brand-gold/80 dark:text-white/80")}
+              onClick={() => setSlotCategories(["Dessert", "Dessert", "Dessert"])}
+            >
+              🍰 All Desserts
+            </button>
+            <button
+              className={cn(categoryPillBase, "text-brand-dusk hover:border-brand-gold/80 dark:text-white/80")}
+              onClick={() => setSlotCategories(["Snack", "Snack", "Snack"])}
+            >
+              🍿 All Snacks
+            </button>
+          </div>
+        </section>
 
         {/* Filters / power-ups */}
         <section className={cardClass}>
@@ -197,13 +336,12 @@ function HomePage() {
             <div className="w-full md:w-2/3 space-y-4">
               <h2 className={sectionTitleClass}>Filters</h2>
               <FilterMenu
-                data={{ allergens: allAllergens, categories: allCategories }}
+                data={{ allergens: allAllergens }}
                 onAllergenChange={setSelectedAllergens}
-                onCategoryChange={setSelectedTags}
               />
             </div>
             <div className="w-full md:w-1/3 space-y-4 border-t border-dashed border-neutral-200 pt-4 md:border-l md:border-t-0 md:pl-4">
-              <h3 className="text-sm font-semibold text-neutral-900">Power-Ups</h3>
+              <h3 className="text-sm font-semibold text-brand-dusk dark:text-white">Power-Ups</h3>
               <p className={sectionSubtitleClass}>
                 Give the slot machine a nudge: healthier options, cheaper picks, or faster meals.
               </p>
@@ -212,26 +350,31 @@ function HomePage() {
           </div>
         </section>
 
-        {/* Dish count + slots */}
+        {/* Slot Machine */}
         <section className={cardClass}>
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-            <div className="w-full lg:w-1/3 space-y-3">
-              <h2 className={sectionTitleClass}>How many dishes?</h2>
-              <DishCountInput value={dishCount} onChange={setDishCount} />
+          <div className="flex flex-col gap-4">
+            <div className="space-y-3">
+              <h2 className={sectionTitleClass}>Spin the Slots</h2>
               <p className={sectionSubtitleClass}>
-                Choose how many ideas you want to spin for. You can lock favorites
-                and spin again.
+                Lock your favorites and spin again to explore more options.
               </p>
             </div>
-            <div className="w-full lg:w-2/3">
-              <SlotMachine
-                reelCount={dishCount}
-                onSpin={onSpin}
-                cooldownMs={cooldownMs}
-                busy={busy}
-                selection={selection}
-              />
-            </div>
+            <SlotMachine
+              reelCount={DISH_COUNT}
+              onSpin={onSpin}
+              cooldownMs={cooldownMs}
+              busy={busy}
+              hasCategory={true}
+              savedMeals={savedMeals}
+              onToggleSave={toggleSavedMeal}
+              selection={selection}
+              slotCategories={slotCategories}
+              onCategoryChange={(index, cat) => {
+                const next = [...slotCategories];
+                next[index] = cat;
+                setSlotCategories(next);
+              }}
+            />
           </div>
         </section>
 
@@ -245,15 +388,15 @@ function HomePage() {
               )}
             >
               <h2 className={sectionTitleClass}>Selected Dishes</h2>
-              <ul className="mt-2 space-y-1.5 text-sm">
+              <ul className="mt-2 space-y-1.5 text-sm text-brand-dusk/90 dark:text-brand-glow/90">
                 {selection.map((d) => (
                   <li key={d.id} className="flex items-baseline gap-2">
                     <span className="inline-block h-1.5 w-1.5 rounded-full bg-gradient-to-r from-orange-500 to-rose-500" />
                     <div>
-                      <span className="font-medium text-neutral-900">
+                      <span className="font-semibold text-brand-dusk dark:text-white">
                         {d.name}
                       </span>{" "}
-                      <span className="text-xs uppercase tracking-wide text-neutral-500">
+                      <span className="text-xs uppercase tracking-wide text-brand-dusk/60 dark:text-brand-glow/70">
                         ({d.category})
                       </span>
                     </div>
@@ -262,13 +405,13 @@ function HomePage() {
               </ul>
               <div className="mt-4 flex flex-wrap gap-3">
                 <button
-                  className="inline-flex items-center gap-1.5 rounded-full border border-neutral-200 bg-white px-3 py-1.5 text-xs font-medium text-neutral-800 shadow-sm transition-all hover:border-orange-300 hover:bg-orange-50 hover:text-orange-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400 focus-visible:ring-offset-2"
+                  className="btn-primary text-xs px-4 py-2"
                   onClick={() => setOpenVideoModal(true)}
                 >
                   🍳 Cook at Home
                 </button>
                 <button
-                  className="inline-flex items-center gap-1.5 rounded-full border border-neutral-200 bg-white px-3 py-1.5 text-xs font-medium text-neutral-800 shadow-sm transition-all hover:border-sky-300 hover:bg-sky-50 hover:text-sky-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-offset-2"
+                  className="btn-ghost text-xs px-4 py-2"
                   onClick={() => {
                     if ("geolocation" in navigator) {
                       navigator.geolocation.getCurrentPosition(
@@ -301,57 +444,59 @@ function HomePage() {
           <VideoPanel videosByDish={videosByDish} />
         </Modal>
 
-        {/* Eat outside section */}
-        <section id="outside" className={cardClass}>
-          <h2 className={sectionTitleClass}>Eat Outside</h2>
-          <p className={sectionSubtitleClass}>
-            Shows stubbed venues; “Using city-level location.”
-          </p>
+        {/* Eat outside section - only shown after dishes are selected */}
+        {selection.length > 0 && (
+          <section id="outside" className={cardClass}>
+            <h2 className={sectionTitleClass}>Eat Outside</h2>
+            <p className={sectionSubtitleClass}>
+              Shows stubbed venues; "Using city-level location."
+            </p>
 
-          {venues ? (
-            <>
-              <div
-                className="mt-4 grid gap-3 md:grid-cols-2"
-                aria-label="Venue list"
-              >
-                {venues.map((v) => (
-                  <div
-                    key={v.id}
-                    className="rounded-xl border border-neutral-200 bg-white/80 p-3 shadow-sm transition-all duration-150 hover:-translate-y-0.5 hover:border-orange-300 hover:shadow-md"
-                  >
-                    <div className="mb-1 text-sm font-semibold text-neutral-900">
-                      {v.name}
-                    </div>
-                    <div className="text-xs text-neutral-600">
-                      {v.cuisine} • {v.price} • {v.rating.toFixed(1)}★ •{" "}
-                      {v.distance_km} km
-                    </div>
-                    <div className="mt-1 text-xs text-neutral-500">{v.addr}</div>
-                    <a
-                      className="mt-2 inline-block text-xs font-medium text-orange-700 underline-offset-2 hover:underline"
-                      href={v.url}
-                      target="_blank"
-                      rel="noreferrer"
+            {venues ? (
+              <>
+                <div
+                  className="mt-4 grid gap-3 md:grid-cols-2"
+                  aria-label="Venue list"
+                >
+                  {venues.map((v) => (
+                    <div
+                      key={v.id}
+                      className="rounded-xl border border-brand-aqua/50 bg-[rgb(var(--card))] p-3 shadow-soft transition-all duration-150 hover:-translate-y-0.5 hover:border-brand-gold hover:shadow-panel"
                     >
-                      Visit website
-                    </a>
-                  </div>
-                ))}
+                      <div className="mb-1 text-base font-bold text-brand-dusk dark:text-white">
+                        {v.name}
+                      </div>
+                      <div className="text-sm font-semibold text-brand-dusk/90 dark:text-brand-glow">
+                        {v.cuisine} • {v.price} • {v.rating.toFixed(1)}★ •{" "}
+                        {v.distance_km} km
+                      </div>
+                      <div className="mt-1 text-sm text-brand-dusk/80 dark:text-brand-glow/85">{v.addr}</div>
+                      <a
+                        className="mt-2 inline-block text-sm font-bold text-brand-coral hover:text-brand-dusk dark:text-brand-gold dark:hover:text-white underline-offset-2 hover:underline"
+                        href={v.url}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        Visit website
+                      </a>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-4 overflow-hidden rounded-2xl border border-brand-aqua/50 shadow-soft">
+                  <MapWithPins venues={venues} />
+                </div>
+              </>
+            ) : (
+              <div className="mt-3 rounded-xl border border-dashed border-brand-aqua/50 bg-[rgb(var(--card))] px-4 py-6 text-sm font-semibold text-brand-dusk dark:text-white">
+                Click{" "}
+                <span className="font-bold text-brand-coral dark:text-brand-gold">
+                  "📍 Eat Outside"
+                </span>{" "}
+                above to see nearby places that match your dishes.
               </div>
-              <div className="mt-4 overflow-hidden rounded-2xl border border-neutral-200 shadow-sm">
-                <MapWithPins venues={venues} />
-              </div>
-            </>
-          ) : (
-            <div className="mt-3 rounded-xl border border-dashed border-neutral-200 bg-neutral-50/60 px-4 py-6 text-sm text-neutral-600">
-              Spin the slot machine and choose{" "}
-              <span className="font-medium text-neutral-800">
-                “Eat Outside”
-              </span>{" "}
-              to see nearby places that match your dishes.
-            </div>
-          )}
-        </section>
+            )}
+          </section>
+        )}
       </div >
     </div >
   );

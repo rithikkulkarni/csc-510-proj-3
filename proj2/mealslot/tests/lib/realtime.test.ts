@@ -77,7 +77,7 @@ describe("getRealtimeForRoom - BroadcastChannel (BCWire)", () => {
     vi.stubGlobal("BroadcastChannel", MockBroadcastChannel as any);
 
     // Dynamically import after stubbing globals
-    const { getRealtimeForRoom } = await import("@/lib/realtime"); // adjust path if needed
+    const { getRealtimeForRoom } = await import("../../lib/realtime"); // adjust path if needed
 
     const wire: any = await getRealtimeForRoom("ROOM1");
     expect(wire.kind).toBe("bc");
@@ -109,7 +109,7 @@ describe("getRealtimeForRoom - WebSocket (WSWire)", () => {
     // Stub global WebSocket
     vi.stubGlobal("WebSocket", MockWebSocket as any);
 
-    const { getRealtimeForRoom } = await import("@/lib/realtime"); // adjust path if needed
+    const { getRealtimeForRoom } = await import("../../lib/realtime"); // adjust path if needed
 
     const wire: any = await getRealtimeForRoom("ROOM2");
     expect(wire.kind).toBe("ws");

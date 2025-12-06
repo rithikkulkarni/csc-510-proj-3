@@ -1,24 +1,30 @@
-// app/components/HeaderServer.tsx
-import HeaderClient from "./HeaderClient";
-import { client } from "@/stack/client";
-import { getUserDetails, ensureUserInDB } from "../app/actions";
+import HeaderClient from './HeaderClient';
+import { stackServerApp } from '@/stack/server';
+import { ensureUserInDB, getUserDetails } from '@/app/actions';
 
 export default async function HeaderServer() {
+    let serverUser = null;
+
     try {
-        // Get authenticated Neon user
-        const neonUser = await client.getUser();
+        // Get current authenticated Neon user (server)
+        const neonUser = await stackServerApp.getUser();
 
         if (neonUser) {
-            // 🔥 Step 3: ensure a row exists in public.User
-            await ensureUserInDB(neonUser);
+            // Ensure user exists in DB
+            serverUser = await ensureUserInDB({
+                id: neonUser.id,
+                displayName: neonUser.displayName ?? 'User',
+            });
 
-            // Optionally preload app-specific user details
-            await getUserDetails(neonUser.id);
+            // Optionally preload full profile
+            if (serverUser) {
+                serverUser = await getUserDetails(neonUser.id);
+            }
         }
     } catch (err) {
-        console.error("Failed to load user for HeaderServer", err);
+        console.error('HeaderServer: Failed to load user', err);
     }
 
-    // Render client side header which uses UserContext
-    return <HeaderClient />;
+    // Pass serverUser to client
+    return <HeaderClient serverUser={serverUser} />;
 }

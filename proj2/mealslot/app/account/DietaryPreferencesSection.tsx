@@ -60,9 +60,6 @@ export default function DietaryPreferencesSection() {
 
     return (
         <div className="space-y-3">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
-                Dietary Preferences
-            </label>
 
             <div className="flex flex-wrap gap-2">
                 {allergens.map(allergen => {

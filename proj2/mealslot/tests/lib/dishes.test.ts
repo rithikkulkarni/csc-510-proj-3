@@ -12,8 +12,8 @@ vi.mock("@/lib/db", () => ({
 }));
 
 // 2️⃣ Now import prisma and the module under test — they will see the mocked version.
-import { prisma } from "@/lib/db";
-import { dishes, allDishes } from "@/lib/dishes"; // ⬅️ adjust path if needed
+import { prisma } from "../../lib/db";
+import { dishes, allDishes } from "../../lib/dishes"; // ⬅️ adjust path if needed
 
 // 3️⃣ Convenience handle for the mock
 const findManyMock = prisma.dish.findMany as unknown as ReturnType<typeof vi.fn>;
