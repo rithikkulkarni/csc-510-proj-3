@@ -432,8 +432,10 @@ export default function PartyClient({
   }, [prefs, state?.party?.id, memberId, activeCode, prefsStateGuard]);
 
   /** broadcast helpers */
-  const summarize = (trip: SpinTriple) =>
-    trip.map((d, i) => `${["Main", "Side", "Dessert"][i]}: ${d?.name ?? "—"}`).join(" · ");
+  const summarize = useCallback((trip: SpinTriple) =>
+    trip.map((d, i) => `${slotCategories[i] || "—"}: ${d?.name ?? "—"}`).join(" · "),
+    [slotCategories]
+  );
 
   const emitSpinBroadcast = useCallback((trip: SpinTriple, lk: [boolean, boolean, boolean]) => {
     const summary = summarize(trip);
@@ -443,7 +445,7 @@ export default function PartyClient({
         code: activeCode, slots: trip, locks: lk, summary
       });
     } catch { }
-  }, [activeCode]);
+  }, [activeCode, summarize]);
 
   /** reroll function (single-slot reroll; host-only) */
   const rerollSingleSlotHost = constUseCallbackRerollSingleSlotHost();

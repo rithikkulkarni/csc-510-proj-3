@@ -31,14 +31,16 @@ export default function FilterMenu({ data, onTagChange = () => { }, onAllergenCh
 
     (async () => {
       try {
+        console.log('FilterMenu: fetching filters from /api/filters');
         const res = await fetch("/api/filters");
         if (!res.ok) throw new Error("bad response");
         const json = await res.json();
+        console.log('FilterMenu: received filters', json);
         if (cancelled) return;
         setTags(json.tags ?? []);
         setAllergens(json.allergens ?? []);
       } catch (err) {
-        console.error("Failed to fetch filters:", err);
+        console.error("FilterMenu: Failed to fetch filters:", err);
       }
     })();
 
@@ -74,37 +76,12 @@ export default function FilterMenu({ data, onTagChange = () => { }, onAllergenCh
 
   return (
     <div className="space-y-4">
-      <h2 className="text-lg font-semibold">Filters</h2>
-
-      <details>
-        <summary className="font-medium">Tags</summary>
-        <div className="mt-2 flex flex-wrap gap-2">
-          {tags.map((tag) => {
-            const active = selectedTags.includes(tag);
-            return (
-              <button
-                key={tag}
-                type="button"
-                aria-pressed={active}
-                onClick={() => toggleTag(tag)}
-                className={cn(
-                  categoryPillBase,
-                  active
-                    ? "bg-neutral-900 border-transparent bg-gradient-to-r from-brand-coral to-brand-gold text-brand-dusk shadow-glow"
-                    : "text-brand-dusk hover:text-brand-dusk hover:border-brand-gold/80 dark:text-white/80 dark:hover:text-white"
-                )}
-              >
-                {tag}
-              </button>
-            );
-          })}
-        </div>
-      </details>
-
-      <details>
-        <summary className="font-medium">Allergens</summary>
-        <div className="mt-2 flex flex-wrap gap-2">
-          {allergens.map((allergen) => {
+      <h3 className="font-medium">Allergens</h3>
+      <div className="flex flex-wrap gap-2">
+        {allergens.length === 0 ? (
+          <p className="text-sm text-gray-500">Loading allergens...</p>
+        ) : (
+          allergens.map((allergen) => {
             const active = selectedAllergens.includes(allergen);
             return (
               <button
@@ -122,9 +99,9 @@ export default function FilterMenu({ data, onTagChange = () => { }, onAllergenCh
                 {allergen}
               </button>
             );
-          })}
-        </div>
-      </details>
+          })
+        )}
+      </div>
     </div>
   );
 }
