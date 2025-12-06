@@ -17,10 +17,10 @@ export function normalizeAllergens(input: string | string[] | null | undefined):
             .trim()
             .toLowerCase();
         if (!v) return;
-        
+
         // Apply alias mapping
         v = aliases[v] || v;
-        
+
         out.push(v);
     };
 

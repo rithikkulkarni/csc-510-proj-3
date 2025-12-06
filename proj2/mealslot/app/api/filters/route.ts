@@ -6,13 +6,13 @@ import { NextRequest } from "next/server";
 export const runtime = "nodejs";
 
 export async function GET(req: NextRequest) {
-	try {
-		// Fetch tags and allergens from all dishes
-		const dishes = await prisma.dish.findMany({
-			select: { tags: true, allergens: true },
-		});
+    try {
+        // Fetch tags and allergens from all dishes
+        const dishes = await prisma.dish.findMany({
+            select: { tags: true, allergens: true },
+        });
 
-		// Flatten CSV arrays and get unique values
+        // Flatten CSV arrays and get unique values
         const allTags = Array.from(
             new Set(
                 dishes.flatMap(d => {
@@ -43,13 +43,13 @@ export async function GET(req: NextRequest) {
                 .replace(/[\{\}\[\]"']/g, '') // Remove brackets and quotes
                 .trim()
                 .toLowerCase();
-            
+
             // Apply alias mapping
             return aliases[normalized] || normalized;
         };
 
         const allergenSet = new Set<string>();
-        
+
         dishes.forEach(d => {
             if (!d.allergens) return;
             let items: string[] = [];
@@ -59,7 +59,7 @@ export async function GET(req: NextRequest) {
             } catch {
                 items = d.allergens.split(",").map(s => s.trim());
             }
-            
+
             items.forEach(item => {
                 if (!item) return;
                 const normalized = normalizeAllergen(item);
@@ -71,9 +71,9 @@ export async function GET(req: NextRequest) {
 
         const allAllergens = Array.from(allergenSet).sort();
 
-		return Response.json({ tags: allTags, allergens: allAllergens });
-	} catch (err) {
-		console.error("Failed to fetch filters:", err);
-		return Response.json({ tags: [], allergens: [] }, { status: 500 });
-	}
+        return Response.json({ tags: allTags, allergens: allAllergens });
+    } catch (err) {
+        console.error("Failed to fetch filters:", err);
+        return Response.json({ tags: [], allergens: [] }, { status: 500 });
+    }
 }
