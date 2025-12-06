@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { client } from "@/stack/client";
-import { ensureUserInDB, getUserDetails } from "@/app/actions";
+import { getUserDetails } from "@/app/actions";
 import { useUser } from "@/app/context/UserContext";
 
 export default function AuthCallbackPage() {
@@ -24,10 +24,27 @@ export default function AuthCallbackPage() {
                 return router.replace("/");
             }
 
-            await ensureUserInDB({
-                id: neonUser.id,
-                displayName: neonUser.displayName ?? "User",
-            });
+            // Create user via API endpoint (proper server-side call)
+            try {
+                console.log(`Auth callback: creating user with auth_id=${neonUser.id}`);
+                const createResponse = await fetch("/api/user/create", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        auth_id: neonUser.id,
+                        displayName: neonUser.displayName ?? "User",
+                    }),
+                });
+                if (!createResponse.ok) {
+                    const errorText = await createResponse.text();
+                    console.error("Failed to create user via API:", createResponse.status, errorText);
+                } else {
+                    const userData = await createResponse.json();
+                    console.log("User created/updated successfully:", userData);
+                }
+            } catch (error) {
+                console.error("Error calling user creation API:", error);
+            }
 
             const profile = await getUserDetails(neonUser.id);
             if (profile) {

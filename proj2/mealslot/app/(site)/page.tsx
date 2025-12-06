@@ -53,7 +53,6 @@ function HomePage() {
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [selectedAllergens, setSelectedAllergens] = useState<string[]>([]);
   const [savedMeals, setSavedMeals] = useState<string[]>([]);
-  const [allAllergens, setAllAllergens] = useState<string[]>([]);
   const [allCategories] = useState<string[]>(["Breakfast", "Lunch", "Dinner", "Dessert", "Snack"]);
   const [powerups, setPowerups] = useState<PowerUpsInput>({});
   const [selection, setSelection] = useState<Dish[]>([]);
@@ -95,20 +94,6 @@ function HomePage() {
     }
 
     fetchUser();
-  }, []);
-
-
-
-
-  // -------------------------
-  // Load all allergens
-  // -------------------------
-  useEffect(() => {
-    async function fetchAllergens() {
-      const allergens = await getAllAllergens();
-      setAllAllergens(allergens);
-    }
-    fetchAllergens();
   }, []);
 
   const handleGuest = () => {
@@ -336,7 +321,7 @@ function HomePage() {
             <div className="w-full md:w-2/3 space-y-4">
               <h2 className={sectionTitleClass}>Filters</h2>
               <FilterMenu
-                data={{ allergens: allAllergens }}
+                onTagChange={setSelectedTags}
                 onAllergenChange={setSelectedAllergens}
               />
             </div>

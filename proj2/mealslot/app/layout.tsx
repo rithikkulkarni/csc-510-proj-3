@@ -3,8 +3,10 @@ import "./globals.css";
 import type { ReactNode } from "react";
 import { StackProvider, StackTheme } from "@stackframe/stack";
 import { stackServerApp } from "@/stack/server"; // or "../stack/server" if not using alias
-import HeaderClient from "@/components/HeaderClient";
+import HeaderServer from "@/components/HeaderServer";
 import { UserProvider } from "./context/UserContext";
+
+export const dynamic = 'force-dynamic';
 
 export const metadata = {
   title: "MealSlot",
@@ -42,7 +44,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             <StackTheme>
               {/* Sticky header */}
               <div className="sticky top-0 z-50">
-                <HeaderClient serverUser={null} />
+                <HeaderServer />
               </div>
 
               {/* Page content */}

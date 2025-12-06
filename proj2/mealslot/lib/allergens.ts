@@ -2,10 +2,25 @@ export function normalizeAllergens(input: string | string[] | null | undefined):
     if (!input) return [];
     const out: string[] = [];
 
+    // Allergen aliases - map variations to standard form
+    const aliases: Record<string, string> = {
+        'tree-nut': 'nuts',
+        'tree_nut': 'nuts',
+        'treenut': 'nuts',
+        'tree nut': 'nuts',
+    };
+
     const push = (s: string) => {
-        const v = (s ?? "").toString().trim();
+        let v = (s ?? "")
+            .toString()
+            .replace(/[{}[\]"']/g, '') // Remove brackets and quotes
+            .trim()
+            .toLowerCase();
         if (!v) return;
-        // normalize capitalization / spacing as-is but trim
+
+        // Apply alias mapping
+        v = aliases[v] || v;
+
         out.push(v);
     };
 

@@ -29,7 +29,7 @@ interface PartySpinMachineProps {
     onSendVote: (idx: 0 | 1 | 2, kind: "keep" | "reroll") => void;
     onGroupSpin: () => void;
     onReroll: () => void;
-    powerups: { healthy?: boolean; cheap?: boolean; fast?: boolean };
+    powerups: { healthy?: boolean; cheap?: boolean; max30m?: boolean };
     onPowerupToggle: (key: string) => void;
 }
 
@@ -197,8 +197,8 @@ export default function PartySpinMachine({
                         Cheap
                     </ToggleChip>
                     <ToggleChip
-                        active={!!powerups.fast}
-                        onClick={() => onPowerupToggle("fast")}
+                        active={!!powerups.max30m}
+                        onClick={() => onPowerupToggle("max30m")}
                     >
                         ≤30m
                     </ToggleChip>

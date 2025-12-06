@@ -105,7 +105,7 @@ export default function PartyClient({
   const [cats, setCats] = useState<{ breakfast: boolean; lunch: boolean; dinner: boolean; dessert: boolean }>({
     breakfast: false, lunch: false, dinner: true, dessert: false
   });
-  const [powerups, setPowerups] = useState<{ healthy?: boolean; cheap?: boolean; fast?: boolean }>({});
+  const [powerups, setPowerups] = useState<{ healthy?: boolean; cheap?: boolean; max30m?: boolean }>({});
 
   /** spin state */
   const [isSpinning, setIsSpinning] = useState(false);
@@ -432,8 +432,10 @@ export default function PartyClient({
   }, [prefs, state?.party?.id, memberId, activeCode, prefsStateGuard]);
 
   /** broadcast helpers */
-  const summarize = (trip: SpinTriple) =>
-    trip.map((d, i) => `${["Main", "Side", "Dessert"][i]}: ${d?.name ?? "—"}`).join(" · ");
+  const summarize = useCallback((trip: SpinTriple) =>
+    trip.map((d, i) => `${slotCategories[i] || "—"}: ${d?.name ?? "—"}`).join(" · "),
+    [slotCategories]
+  );
 
   const emitSpinBroadcast = useCallback((trip: SpinTriple, lk: [boolean, boolean, boolean]) => {
     const summary = summarize(trip);
@@ -443,7 +445,7 @@ export default function PartyClient({
         code: activeCode, slots: trip, locks: lk, summary
       });
     } catch { }
-  }, [activeCode]);
+  }, [activeCode, summarize]);
 
   /** reroll function (single-slot reroll; host-only) */
   const rerollSingleSlotHost = constUseCallbackRerollSingleSlotHost();
@@ -624,7 +626,7 @@ export default function PartyClient({
         isSpinning={isSpinning}
         powerups={powerups}
         onPowerupToggle={(key: string) => {
-          if (key === "healthy" || key === "cheap" || key === "fast") {
+          if (key === "healthy" || key === "cheap" || key === "max30m") {
             setPowerups(p => ({ ...p, [key]: !p[key] }));
           }
         }}
