@@ -4,11 +4,16 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { z } from "zod";
 import { PrefsSchema, DietEnum, ALLERGEN_OPTIONS } from "@/lib/party";
 import { getRealtimeForRoom } from "@/lib/realtime";
+<<<<<<< HEAD
 import { useUser } from "@/app/context/UserContext";
 import PartySpinMachine from "@/components/party/PartySpinMachine";
 import PartySidebar from "@/components/party/PartySidebar";
 import PartyChat from "@/components/party/PartyChat";
 import PartyMap from "@/components/party/PartyMap";
+=======
+import PlacesMapCard from "@/components/PlacesMapCard";
+import { cn } from "./ui/cn"; 
+>>>>>>> 15c4f95dd6ffd9b8ff27f9d3aca083a6831ef7c9
 
 /** ——— Presence tuning ——— */
 const HEARTBEAT_MS = 15_000;   // send a beat every 15s
@@ -42,6 +47,52 @@ const now = () => Date.now();
 const byCreated = (a: Peer, b: Peer) =>
   a.creator === b.creator ? a.id.localeCompare(b.id) : a.creator ? -1 : 1;
 
+<<<<<<< HEAD
+=======
+function ToggleChip({
+  active,
+  children,
+  onClick,
+}: {
+  active?: boolean;
+  children: React.ReactNode;
+  onClick?: () => void;
+}) {
+  const base =
+    "rounded-full border px-3 py-1.5 text-xs md:text-sm font-medium transform transition-all duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-50 hover:-translate-y-0.5 hover:scale-[1.05] active:scale-[0.97]";
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={[
+        base,
+        active
+          ? "border-transparent bg-gradient-to-r from-orange-500 to-rose-500 text-white shadow-sm hover:shadow-md dark:from-orange-500 dark:to-rose-500"
+          : "border-neutral-200 bg-white/90 text-neutral-700 hover:border-neutral-300 hover:bg-neutral-50 hover:text-neutral-900 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100 dark:hover:bg-neutral-800",
+      ].join(" ")}
+      aria-pressed={!!active}
+    >
+      {children}
+    </button>
+  );
+}
+
+function Ribbon({ children }: { children: React.ReactNode }) {
+  return <div className="mb-2 text-sm font-semibold">{children}</div>;
+}
+function Pill({ children }: { children: React.ReactNode }) {
+  return <span className="rounded-full border px-2 py-0.5 text-xs bg-neutral-100 border-neutral-300 text-neutral-900 dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-100">{children}</span>;
+}
+function Card({ children }: { children: React.ReactNode }) {
+  return <div className="rounded-2xl border bg-white p-3 dark:border-neutral-800 dark:bg-neutral-900">{children}</div>;
+}
+
+type PartyClientProps = {
+  code?: string;
+  onCodeChange?: (code: string) => void; // <-- add this
+};
+
+>>>>>>> 15c4f95dd6ffd9b8ff27f9d3aca083a6831ef7c9
 /** ————— Component ————— */
 export default function PartyClient({
   code: initialCode,
@@ -63,8 +114,16 @@ export default function PartyClient({
 
   /** nickname (persist) */
   const [nickname, setNickname] = useState<string>(() => {
+<<<<<<< HEAD
     if (initialNickname) return initialNickname;
     try { return localStorage.getItem("mealslot_nickname") || "Guest"; } catch { return "Guest"; }
+=======
+    try {
+      return localStorage.getItem("mealslot_nickname") || "Guest";
+    } catch {
+      return "Guest";
+    }
+>>>>>>> 15c4f95dd6ffd9b8ff27f9d3aca083a6831ef7c9
   });
   useEffect(() => { try { localStorage.setItem("mealslot_nickname", nickname); } catch { } }, [nickname]);
 
@@ -115,23 +174,31 @@ export default function PartyClient({
   const [recent, setRecent] = useState<string[]>([]);
 
   /** votes per slot (keep / reroll) */
-  const [votes, setVotes] = useState<[{ keep: Set<string>; reroll: Set<string> }, { keep: Set<string>; reroll: Set<string> }, { keep: Set<string>; reroll: Set<string> }]>([
+  const [votes, setVotes] = useState<[
+    { keep: Set<string>; reroll: Set<string> },
+    { keep: Set<string>; reroll: Set<string> },
+    { keep: Set<string>; reroll: Set<string> }
+  ]>([
     { keep: new Set(), reroll: new Set() },
     { keep: new Set(), reroll: new Set() },
     { keep: new Set(), reroll: new Set() },
   ]);
-  const resetVotes = () => setVotes([
-    { keep: new Set(), reroll: new Set() },
-    { keep: new Set(), reroll: new Set() },
-    { keep: new Set(), reroll: new Set() },
-  ]);
+
+  const resetVotes = () =>
+    setVotes([
+      { keep: new Set(), reroll: new Set() },
+      { keep: new Set(), reroll: new Set() },
+      { keep: new Set(), reroll: new Set() },
+    ]);
 
   /** chat */
   const [chat, setChat] = useState<ChatMsg[]>([]);
   const chatInputRef = useRef<HTMLInputElement>(null);
 
   /** realtime */
-  const rtRef = useRef<Awaited<ReturnType<typeof getRealtimeForRoom>> | null>(null);
+  const rtRef = useRef<Awaited<ReturnType<typeof getRealtimeForRoom>> | null>(
+    null,
+  );
   const clientIdRef = useRef<string>("");
   if (!clientIdRef.current) {
     try {
@@ -152,7 +219,7 @@ export default function PartyClient({
   /** computed */
   const livePeers = useMemo(() => {
     const arr = Object.values(peers);
-    const pruned = arr.filter(p => now() - p.lastSeen <= PEER_TTL_MS);
+    const pruned = arr.filter((p) => now() - p.lastSeen <= PEER_TTL_MS);
     pruned.sort(byCreated);
     livePeersRef.current = pruned;
     return pruned;
@@ -163,7 +230,7 @@ export default function PartyClient({
   const iAmHostRef = useRef(iAmHost); useEffect(() => { iAmHostRef.current = iAmHost; }, [iAmHost]);
 
   const displayName = useMemo(() => {
-    const me = state?.members.find(m => m.id === memberId);
+    const me = state?.members.find((m) => m.id === memberId);
     return me?.nickname || nickname;
   }, [memberId, nickname, state?.members]);
 
@@ -205,30 +272,39 @@ export default function PartyClient({
   /** one-time system message */
   const pushedConnectedRef = useRef(false);
   const pushSys = useCallback((text: string) => {
-    setChat(c => [...c, { id: crypto.randomUUID(), ts: Date.now(), from: "system", text }]);
+    setChat((c) => [
+      ...c,
+      { id: crypto.randomUUID(), ts: Date.now(), from: "system", text },
+    ]);
   }, []);
 
   /** helper: bump peer lastSeen for any id */
-  const touchPeer = useCallback((id: string, mutateNickname?: string, creatorFlag?: boolean) => {
-    setPeers(prev => {
-      const ex = prev[id];
-      return {
-        ...prev,
-        [id]: {
-          id,
-          nickname: mutateNickname ?? ex?.nickname ?? "Guest",
-          creator: creatorFlag ?? ex?.creator ?? false,
-          lastSeen: Date.now(),
-        }
-      };
-    });
-  }, []);
+  const touchPeer = useCallback(
+    (id: string, mutateNickname?: string, creatorFlag?: boolean) => {
+      setPeers((prev) => {
+        const ex = prev[id];
+        return {
+          ...prev,
+          [id]: {
+            id,
+            nickname: mutateNickname ?? ex?.nickname ?? "Guest",
+            creator: creatorFlag ?? ex?.creator ?? false,
+            lastSeen: Date.now(),
+          },
+        };
+      });
+    },
+    [],
+  );
 
   /** realtime wiring — attach listeners once per room */
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      if (!activeCode || !memberId) { disconnect(); return; }
+      if (!activeCode || !memberId) {
+        disconnect();
+        return;
+      }
 
       const rt = await getRealtimeForRoom(activeCode);
       if (cancelled) { try { rt.close(); } catch { }; return; }
@@ -303,7 +379,7 @@ export default function PartyClient({
       rt.on("vote", (v: VotePacket & { clientId?: string }) => {
         if (!v || v.idx === undefined) return;
         if (v.clientId) touchPeer(v.clientId);
-        setVotes(prev => {
+        setVotes((prev) => {
           const cp = [
             { keep: new Set(prev[0].keep), reroll: new Set(prev[0].reroll) },
             { keep: new Set(prev[1].keep), reroll: new Set(prev[1].reroll) },
@@ -336,13 +412,22 @@ export default function PartyClient({
       }
 
       // When tab becomes visible again, send an immediate beat
-      const vis = () => { if (document.visibilityState === "visible") sendBeat(); };
+      const vis = () => {
+        if (document.visibilityState === "visible") sendBeat();
+      };
       document.addEventListener("visibilitychange", vis);
 
-      return () => { clearInterval(hb); document.removeEventListener("visibilitychange", vis); };
+      return () => {
+        clearInterval(hb);
+        document.removeEventListener("visibilitychange", vis);
+      };
     })();
 
-    return () => { cancelled = true; disconnect(); pushedConnectedRef.current = false; };
+    return () => {
+      cancelled = true;
+      disconnect();
+      pushedConnectedRef.current = false;
+    };
   }, [activeCode, memberId, displayName, disconnect, pushSys, touchPeer]);
 
   /** fetch server state */
@@ -353,7 +438,7 @@ export default function PartyClient({
     setState(j);
 
     // seed peers from server order (host first)
-    setPeers(prev => {
+    setPeers((prev) => {
       const base = { ...prev };
       const host = j.members[0]?.id ?? null;
       for (const m of j.members) {
@@ -369,7 +454,19 @@ export default function PartyClient({
     return j;
   }, []);
 
+<<<<<<< HEAD
   /** create/join/leave handled at page-level; PartyClient initializes from provided props */
+=======
+  /** create/join/leave */
+  const onCreate = useCallback(async () => {
+    const r = await fetch("/api/party/create", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ nickname }),
+    });
+    const j = await r.json();
+    if (!r.ok) return alert(j?.error || "Create failed");
+>>>>>>> 15c4f95dd6ffd9b8ff27f9d3aca083a6831ef7c9
 
   // onLeave is handled by the page; PartyClient will disconnect via effects when `activeCode`/`memberId` change
 
@@ -386,7 +483,33 @@ export default function PartyClient({
     }
   }, [initialCode, initialMemberId, skipAutoJoin, fetchState, updateActiveCode]);
 
+<<<<<<< HEAD
   // Parent-level create/join handlers moved to page; no ref exposure here anymore
+=======
+  const onJoin = useCallback(async () => {
+    if (!code || code.length !== 6) return alert("Enter a 6-char code");
+    const r = await fetch("/api/party/join", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ code, nickname }),
+    });
+    const j = await r.json();
+    if (!r.ok) return alert(j?.error || "Join failed");
+
+    setMemberId(j.memberId);
+    createdRef.current = false;
+    setActiveCode(code);
+    clientIdRef.current = j.memberId;
+    onCodeChange?.(code);
+    await fetchState(code);
+    try { rtRef.current?.emit("nick", { code, clientId: j.memberId, nickname: j.nickname }); } catch { }
+    try { rtRef.current?.emit("sync_request", { code, clientId: j.memberId }); } catch { }
+  }, [code, nickname, fetchState]);
+
+  const onLeave = useCallback(() => {
+    disconnect(); setMemberId(null); setActiveCode(""); setPeers({}); setSlots([null, null, null]); setLocks([false, false, false]); resetVotes();
+  }, [disconnect]);
+>>>>>>> 15c4f95dd6ffd9b8ff27f9d3aca083a6831ef7c9
 
   /** prefs push */
   const [prefsStateGuard] = useState(0); // no-op, keeps deps stable
@@ -419,7 +542,56 @@ export default function PartyClient({
     } catch { }
   }, [activeCode]);
 
+<<<<<<< HEAD
   /** reroll function (single-slot reroll; host-only) */
+=======
+  /** spinning (HOST ONLY) */
+  const onGroupSpin = useCallback(async () => {
+    if (!activeCode || !memberId) return alert("Join a party first");
+    if (!iAmHost) return alert("Only the host can spin.");
+    setIsSpinning(true);
+    try {
+      const endpoint = `${window.location.origin}/api/party/spin`;
+      const r = await fetch(endpoint, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        cache: "no-store",
+        body: JSON.stringify({
+          code: activeCode,
+          categories: categoriesArray,
+          constraints: state?.party?.constraints || {},
+          locked: locksRef.current,
+          slots: slotsRef.current,
+          powerups,
+        }),
+      });
+      if (!r.ok) {
+        const text = await r.text().catch(() => "");
+        throw new Error(`HTTP ${r.status} ${r.statusText} :: ${text}`);
+      }
+      const j = await r.json().catch(() => ({}));
+      const trip = (j?.selection as SpinTriple) ?? [null, null, null];
+      setSlots(trip);
+      setRecent((rm) => [summarize(trip), ...rm].slice(0, 50));
+      resetVotes();
+      emitSpinBroadcast(trip, locksRef.current);
+    } catch (e) {
+      console.error(e);
+      alert("Group spin failed.");
+    } finally {
+      setIsSpinning(false);
+    }
+  }, [
+    activeCode,
+    memberId,
+    iAmHost,
+    categoriesArray,
+    state?.party?.constraints,
+    powerups,
+    emitSpinBroadcast,
+  ]);
+
+>>>>>>> 15c4f95dd6ffd9b8ff27f9d3aca083a6831ef7c9
   const rerollSingleSlotHost = constUseCallbackRerollSingleSlotHost();
 
   function constUseCallbackRerollSingleSlotHost() {
@@ -516,7 +688,7 @@ export default function PartyClient({
         emitSpinBroadcast(slotsRef.current, cp);
         return cp;
       });
-      setVotes(prev => {
+      setVotes((prev) => {
         const cp = [
           { keep: new Set(prev[0].keep), reroll: new Set(prev[0].reroll) },
           { keep: new Set(prev[1].keep), reroll: new Set(prev[1].reroll) },
@@ -579,11 +751,131 @@ export default function PartyClient({
     try { rtRef.current?.emit("chat", { ...msg, code: activeCode, clientId: memberId }); } catch { }
   }, [activeCode, displayName, memberId]);
 
+<<<<<<< HEAD
+=======
+  /** ——— Render helpers ——— */
+  const SpinCard = ({ slot, idx }: { slot: Dish | null; idx: 0 | 1 | 2 }) => {
+    const v = votes[idx];
+    const myId = memberId || "";
+    const iVotedKeep = v.keep.has(myId);
+    const iVotedReroll = v.reroll.has(myId);
+
+    const lockButtonBase =
+      "inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[11px] font-medium transform transition-all duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-50 hover:-translate-y-0.5 hover:scale-[1.05] active:scale-[0.97]";
+
+    const voteButtonBase =
+      "inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium transform transition-all duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-50 hover:-translate-y-0.5 hover:scale-[1.05] active:scale-[0.97]";
+
+    return (
+      <Card>
+        <div className="mb-1 flex items-center justify-between text-xs text-neutral-500 dark:text-neutral-300">
+          <div className="font-semibold">{["Main", "Side", "Dessert"][idx]}</div>
+          <button
+            type="button"
+            onClick={() => toggleLock(idx)}
+            disabled={!iAmHost}
+            className={[
+              lockButtonBase,
+              iAmHost
+                ? locks[idx]
+                  ? "border-amber-600 bg-amber-600 text-white shadow-sm hover:shadow-md disabled:opacity-60"
+                  : "border-neutral-200 bg-white text-neutral-900 hover:border-neutral-300 hover:bg-neutral-50 disabled:opacity-60 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
+                : "border-neutral-200 bg-neutral-100 text-neutral-500 cursor-not-allowed dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-400",
+            ].join(" ")}
+            title={iAmHost ? (locks[idx] ? "Unlock" : "Lock") : "Host only"}
+          >
+            {locks[idx] ? <Unlock className="h-3 w-3" /> : <Lock className="h-3 w-3" />}
+            {locks[idx] ? "Unlock" : "Lock"}
+          </button>
+        </div>
+
+        <div className="mb-2">
+          <div className="text-sm md:text-base font-semibold text-neutral-900 dark:text-neutral-100">
+            {slot?.name ?? "No selection."}
+          </div>
+          {slot && (
+            <div className="mt-1 flex flex-wrap gap-1.5">
+              <Pill>{slot.category}</Pill>
+              {slot.tags.slice(0, 2).map(t => <Pill key={t}>{t}</Pill>)}
+            </div>
+          )}
+        </div>
+
+        {slot && (
+          <>
+            <div className="mb-1 text-xs font-semibold text-neutral-500 dark:text-neutral-300">
+              Allergens
+            </div>
+            <div className="mb-2 flex flex-wrap gap-1.5">
+              {slot.allergens.length ? (
+                slot.allergens.map((a) => <Pill key={a}>{a}</Pill>)
+              ) : (
+                <span className="text-xs opacity-70">—</span>
+              )}
+            </div>
+
+            {/* Voting row */}
+            <div className="mb-2 flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => sendVote(idx, "keep")}
+                className={[
+                  voteButtonBase,
+                  iVotedKeep
+                    ? "border-green-600 bg-green-600 text-white shadow-sm hover:shadow-md"
+                    : "border-neutral-200 bg-white text-neutral-800 hover:border-green-400 hover:bg-green-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100",
+                ].join(" ")}
+                title="Vote to keep this dish"
+              >
+                <ThumbsUp className="h-3.5 w-3.5" /> Keep ({v.keep.size}/
+                {Math.max(1, quorum)})
+              </button>
+              <button
+                type="button"
+                onClick={() => sendVote(idx, "reroll")}
+                className={[
+                  voteButtonBase,
+                  iVotedReroll
+                    ? "border-amber-600 bg-amber-600 text-white shadow-sm hover:shadow-md"
+                    : "border-neutral-200 bg-white text-neutral-800 hover:border-amber-400 hover:bg-amber-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100",
+                ].join(" ")}
+                title="Vote to re-roll just this slot"
+              >
+                <RotateCcw className="h-3.5 w-3.5" /> Re-roll (
+                {v.reroll.size}/{Math.max(1, quorum)})
+              </button>
+            </div>
+
+            <div>
+              <a
+                target="_blank"
+                rel="noreferrer"
+                href={`https://www.youtube.com/results?search_query=${encodeURIComponent(
+                  slot.ytQuery || `${slot.name} recipe`,
+                )}`}
+                className="inline-flex items-center gap-1 rounded-full border border-neutral-200 bg-white/90 px-3 py-1 text-xs font-medium text-neutral-800 shadow-sm transition-all duration-150 ease-out hover:-translate-y-0.5 hover:border-red-400 hover:bg-red-50 hover:text-red-700 hover:shadow-md dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:hover:bg-neutral-800/80"
+              >
+                Watch on YouTube
+              </a>
+            </div>
+          </>
+        )}
+      </Card>
+    );
+  };
+
+>>>>>>> 15c4f95dd6ffd9b8ff27f9d3aca083a6831ef7c9
   /** UI gates */
   const canCreate = code.length === 0 && !memberId;
   const canJoin = code.length === 6 && !memberId;
 
+  const primarySmallButtonBase =
+    "inline-flex items-center justify-center rounded-full border px-3 py-1.5 text-xs md:text-sm font-medium transform transition-all duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-50 hover:-translate-y-0.5 hover:scale-[1.05] active:scale-[0.97]";
+  const secondarySmallButtonBase =
+    "inline-flex items-center justify-center rounded-full border px-3 py-1.5 text-xs md:text-sm font-medium transform transition-all duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-300 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-50 hover:-translate-y-0.5 hover:scale-[1.05] active:scale-[0.97]";
+
   return (
+<<<<<<< HEAD
     <div className="grid gap-4 lg:grid-cols-[2fr_1fr]">
 
       {/* Left: Spin Machine (2/3 width) */}
@@ -635,7 +927,286 @@ export default function PartyClient({
           chat={chat}
           onSendChat={sendChat}
         />
+=======
+    <div className="grid gap-4 lg:grid-cols-[420px_1fr] lg:gap-5">
+      {/* Left column */}
+      <Card>
+        <Ribbon>Party</Ribbon>
+
+        <div className="mb-3 grid grid-cols-[1fr_auto] items-center gap-2">
+          <label className="text-xs font-medium text-neutral-600 dark:text-neutral-300">
+            Code
+          </label>
+          <div />
+          <input
+            value={code}
+            onChange={(e) => setCode(e.currentTarget.value.toUpperCase().slice(0, 6))}
+            placeholder="ABC123"
+            className="col-span-1 w-24 rounded-lg border border-neutral-200 bg-white px-2 py-1 text-sm font-mono tracking-wider text-neutral-900 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400 focus-visible:ring-offset-2 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
+          />
+          <button
+            type="button"
+            className="inline-flex items-center gap-1 rounded border border-neutral-300 px-2 py-1 text-xs hover:bg-neutral-50 dark:border-neutral-700 dark:hover:bg-neutral-800"
+            onClick={() => code && navigator.clipboard.writeText(code)}
+            disabled={!code}
+            title="Copy code"
+          >
+            <LinkIcon className="h-3.5 w-3.5" /> Copy
+          </button>
+        </div>
+
+        <div className="mb-4 grid grid-cols-[1fr_auto] items-center gap-2">
+          <label className="text-xs font-medium text-neutral-600 dark:text-neutral-300">
+            Your name
+          </label>
+          <div />
+          <input
+            value={nickname}
+            onChange={(e) => setNickname(e.currentTarget.value.slice(0, 24))}
+            placeholder="Your name"
+            className="col-span-1 w-40 rounded-lg border border-neutral-200 bg-white px-2 py-1 text-sm text-neutral-900 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400 focus-visible:ring-offset-2 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
+          />
+          <div />
+        </div>
+
+        <div className="mb-4 grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            disabled={!canCreate}
+            onClick={onCreate}
+            className={cn(
+              primarySmallButtonBase,
+              canCreate
+                ? "border-transparent bg-gradient-to-r from-orange-500 to-rose-500 text-white shadow-sm hover:shadow-md disabled:opacity-60"
+                : "cursor-not-allowed border-neutral-200 bg-neutral-100 text-neutral-400",
+            )}
+          >
+            Create
+          </button>
+          <button
+            type="button"
+            disabled={!canJoin}
+            onClick={onJoin}
+            className={cn(
+              primarySmallButtonBase,
+              canJoin
+                ? "border-neutral-200 bg-white text-neutral-800 hover:border-orange-300 hover:bg-orange-50 hover:text-orange-800 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
+                : "cursor-not-allowed border-neutral-200 bg-neutral-100 text-neutral-400",
+            )}
+          >
+            Join
+          </button>
+        </div>
+
+        <div className="mb-2 flex items-center justify-between gap-2 text-xs">
+          <div className="text-neutral-600 dark:text-neutral-300">
+            Transport:{" "}
+            <span className="font-mono text-neutral-800 dark:text-neutral-100">
+              {transport || "…"}
+            </span>
+          </div>
+          {memberId && (
+            <button
+              type="button"
+              onClick={onLeave}
+              className={cn(
+                secondarySmallButtonBase,
+                "border-neutral-200 bg-white text-neutral-800 hover:border-red-300 hover:bg-red-50 hover:text-red-700 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100",
+              )}
+              title="Leave party"
+            >
+              <LogOut className="h-3.5 w-3.5" /> Leave
+            </button>
+          )}
+        </div>
+
+        {state && activeCode && memberId && (
+          <div className="mt-3 rounded-xl border border-dashed border-neutral-200 bg-neutral-50/70 px-3 py-2 text-xs text-neutral-700 dark:border-neutral-700 dark:bg-neutral-900/60 dark:text-neutral-100">
+            You’re in party{" "}
+            <span className="font-mono font-semibold">
+              {state.party.code}
+            </span>
+          </div>
+        )}
+
+        {/* Map area */}
+        <div className="mt-6">
+          <Ribbon>Eat Outside</Ribbon>
+          <p className="mb-2 text-xs text-neutral-500 dark:text-neutral-400">
+            Shows stubs based on your approximate location.
+          </p>
+          <PlacesMapCard height={300} />
+        </div>
+      </Card>
+
+      {/* Right column */}
+      <div className="grid gap-4">
+        <Card>
+          <div className="mb-2 flex items-center justify-between">
+            <Ribbon>Members</Ribbon>
+            <div className="rounded-full bg-neutral-100 px-2.5 py-0.5 text-[11px] font-medium text-neutral-700 dark:bg-neutral-800 dark:text-neutral-200">
+              {livePeers.length} online
+            </div>
+          </div>
+
+          <div className="mb-3 flex flex-wrap gap-2">
+            {livePeers.map((p) => {
+              const tone =
+                p.id === hostId ? "host" : p.id === memberId ? "self" : "default";
+              return (
+                <span
+                  key={p.id}
+                  className={[
+                    "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs",
+                    tone === "host" ? "bg-orange-500 text-black border-orange-400"
+                      : tone === "self" ? "bg-sky-500 text-black border-sky-400"
+                        : "bg-neutral-100 text-neutral-900 border-neutral-300 dark:bg-neutral-800 dark:text-neutral-100 dark:border-neutral-700"
+                  ].join(" ")}
+                >
+                  {tone === "host" && <Crown className="h-3 w-3" />} {p.nickname}{p.id === memberId ? " (you)" : ""}
+                </span>
+              );
+            })}
+          </div>
+
+          {/* Categories & power-ups */}
+          <div className="mb-3">
+            <Ribbon>Categories</Ribbon>
+            <div className="flex flex-wrap gap-2">
+              {(["breakfast", "lunch", "dinner", "dessert"] as const).map(k => (
+                <ToggleChip key={k} active={(cats as any)[k]} onClick={() => setCats(c => ({ ...c, [k]: !(c as any)[k] }))}>{k}</ToggleChip>
+              ))}
+            </div>
+          </div>
+          <div className="mb-4">
+            <Ribbon>Power-Ups</Ribbon>
+            <div className="flex flex-wrap gap-2">
+              <ToggleChip active={!!powerups.healthy} onClick={() => setPowerups(p => ({ ...p, healthy: !p.healthy }))}>Healthy</ToggleChip>
+              <ToggleChip active={!!powerups.cheap} onClick={() => setPowerups(p => ({ ...p, cheap: !p.cheap }))}>Cheap</ToggleChip>
+              <ToggleChip active={!!powerups.fast} onClick={() => setPowerups(p => ({ ...p, fast: !p.fast }))}>≤30m</ToggleChip>
+            </div>
+          </div>
+
+          <div className="mb-4 flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              disabled={!memberId || isSpinning || !iAmHost}
+              onClick={onGroupSpin}
+              className={cn(
+                primarySmallButtonBase,
+                !memberId || !iAmHost
+                  ? "cursor-not-allowed border-neutral-200 bg-neutral-100 text-neutral-400"
+                  : isSpinning
+                  ? "border-neutral-200 bg-white text-neutral-800 hover:border-orange-300 hover:bg-orange-50 hover:text-orange-800 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
+                  : "border-transparent bg-gradient-to-r from-orange-500 to-rose-500 text-white shadow-sm hover:shadow-md",
+              )}
+              title={iAmHost ? "Spin for the group" : "Host only"}
+            >
+              <Shuffle className="h-4 w-4" />{" "}
+              {isSpinning ? "Spinning…" : "Group Spin"}
+            </button>
+            <button
+              type="button"
+              disabled={!memberId || isSpinning || !iAmHost}
+              onClick={() => onGroupSpin()}
+              className="inline-flex items-center gap-1 rounded border border-neutral-300 bg-white px-3 py-1 text-sm hover:bg-neutral-50 disabled:opacity-50 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-800/80"
+              title={iAmHost ? "Re-run spin" : "Host only"}
+            >
+              <RotateCcw className="h-4 w-4" /> Re-roll
+            </button>
+          </div>
+
+          {/* Last spin */}
+          <Ribbon>Last spin</Ribbon>
+          <div className="grid gap-3 md:grid-cols-3">
+            <SpinCard slot={slots[0]} idx={0} />
+            <SpinCard slot={slots[1]} idx={1} />
+            <SpinCard slot={slots[2]} idx={2} />
+          </div>
+
+          {/* Recent spins */}
+          <div className="mt-4">
+            <Ribbon>Recent spins</Ribbon>
+            <div className="text-xs text-neutral-600 dark:text-neutral-300">
+              {recent.length ? recent.map((s, i) => <div key={i}>{s}</div>) : "Host rebroadcasts latest result to newcomers."}
+            </div>
+          </div>
+        </Card>
+
+        {/* Preferences */}
+        <Card>
+          <Ribbon>Your preferences</Ribbon>
+
+          <div className="mb-1 text-xs font-semibold text-neutral-600 dark:text-neutral-300">
+            Diet
+          </div>
+          <div className="mb-3 flex flex-wrap gap-2">
+            {DietEnum.options.map(d => (
+              <ToggleChip key={d} active={prefs.diet === d} onClick={() => pushPrefs({ diet: d })}>{d}</ToggleChip>
+            ))}
+            <ToggleChip active={!prefs.diet} onClick={() => pushPrefs({ diet: undefined })}>none</ToggleChip>
+          </div>
+
+          <div className="mb-1 text-xs font-semibold text-neutral-600 dark:text-neutral-300">
+            Allergens
+          </div>
+          <div className="mb-1 flex flex-wrap gap-2">
+            {AllergenEnum.options.map((a) => {
+              const active = (prefs.allergens ?? []).includes(a);
+              return (
+                <ToggleChip key={a} active={active} onClick={() => {
+                  const set = new Set(prefs.allergens ?? []);
+                  active ? set.delete(a) : set.add(a);
+                  pushPrefs({ allergens: Array.from(set) });
+                }}>{a.replace("_", " ")}</ToggleChip>
+              );
+            })}
+          </div>
+        </Card>
+
+        {/* Chat */}
+        <Card>
+          <Ribbon>Party chat</Ribbon>
+          <div className="mb-2 max-h-40 overflow-auto rounded-xl border border-neutral-200 bg-neutral-50/70 p-2 text-xs text-neutral-800 dark:border-neutral-700 dark:bg-neutral-900/60 dark:text-neutral-100">
+            {chat.length === 0 ? (
+              <div className="opacity-60">No messages yet.</div>
+            ) : (
+              chat.map((m) => (
+                <div key={m.id} className="mb-1">
+                  <span className="inline-flex items-center rounded-full bg-sky-600/15 px-2 py-0.5 text-[11px] font-medium text-sky-800 dark:bg-sky-500/20 dark:text-sky-100">
+                    {m.from}
+                  </span>{" "}
+                  <span className="text-[10px] text-neutral-500">
+                    {new Date(m.ts).toLocaleTimeString()}
+                  </span>
+                  <div className="pl-1">{m.text}</div>
+                </div>
+              ))
+            )}
+          </div>
+          <div className="flex gap-2">
+            <input
+              ref={chatInputRef}
+              className="flex-1 rounded-full border border-neutral-200 bg-white px-3 py-1.5 text-sm text-neutral-900 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400 focus-visible:ring-offset-2 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
+              placeholder="Message…"
+              onKeyDown={(e) => { if (e.key === "Enter") { const v = (e.currentTarget as HTMLInputElement).value; (e.currentTarget as HTMLInputElement).value = ""; sendChat(v); } }}
+            />
+            <button
+              type="button"
+              onClick={() => { const v = chatInputRef.current?.value || ""; if (chatInputRef.current) chatInputRef.current.value = ""; sendChat(v); }}
+              className="rounded border border-neutral-300 bg-white px-3 py-1 text-sm hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-800/80"
+            >
+              Send
+            </button>
+          </div>
+        </Card>
+>>>>>>> 15c4f95dd6ffd9b8ff27f9d3aca083a6831ef7c9
       </div>
     </div>
   );
 }
+<<<<<<< HEAD
+=======
+
+export { PartyClient };
+>>>>>>> 15c4f95dd6ffd9b8ff27f9d3aca083a6831ef7c9

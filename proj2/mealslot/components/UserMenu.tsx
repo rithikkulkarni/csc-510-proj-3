@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment } from "react";
+import React, { Fragment } from "react";
 import { Menu, Transition } from "@headlessui/react";
 import { ChevronDownIcon } from "@heroicons/react/20/solid";
 import Link from "next/link";
@@ -21,12 +21,12 @@ export default function UserMenu({ user, onSignOut }: UserMenuProps) {
 
         <Transition
           as={Fragment}
-          enter="transition ease-out duration-100"
-          enterFrom="transform opacity-0 scale-95"
-          enterTo="transform opacity-100 scale-100"
-          leave="transition ease-in duration-75"
-          leaveFrom="transform opacity-100 scale-100"
-          leaveTo="transform opacity-0 scale-95"
+          enter="transition ease-out duration-120"
+          enterFrom="transform scale-95 opacity-0"
+          enterTo="transform scale-100 opacity-100"
+          leave="transition ease-in duration-100"
+          leaveFrom="transform scale-100 opacity-100"
+          leaveTo="transform scale-95 opacity-0"
         >
           <Menu.Items className="absolute right-0 mt-3 w-56 origin-top-right overflow-hidden rounded-xl border border-[rgba(var(--card-border),0.9)] bg-[rgb(var(--card))] shadow-2xl ring-1 ring-[rgba(var(--card-border),0.6)] backdrop-blur focus:outline-none z-50">
             <div className="py-2">
@@ -59,7 +59,9 @@ export default function UserMenu({ user, onSignOut }: UserMenuProps) {
                 {({ active }) => (
                   <Link
                     href="/preferences"
-                    className={`${active ? "bg-gray-100" : ""} block px-4 py-2 text-sm text-gray-700`}
+                    className={`block px-4 py-2 ${
+                      active ? "bg-neutral-50 text-neutral-900" : ""
+                    }`}
                   >
                     Dietary Preferences
                   </Link>
