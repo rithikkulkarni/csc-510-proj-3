@@ -1,3 +1,10 @@
+/**
+ * RecipePanel component
+ *
+ * Displays a grid of recipe cards including ingredients, steps,
+ * nutrition information, and optional warnings. Supports playing
+ * associated recipe videos in a modal overlay.
+ */
 "use client";
 
 import React, { useState } from "react";
@@ -5,12 +12,18 @@ import Modal from "@/components/ui/Modal";
 import { RecipeJSON } from "@/lib/schemas";
 
 export default function RecipePanel({ recipes }: { recipes: RecipeJSON[] }) {
+  // Tracks the currently selected video to display in the modal
   const [video, setVideo] = useState<{ id: string; title: string } | null>(null);
 
   return (
     <div className="grid gap-3 md:grid-cols-2">
       {recipes.map((r) => (
-        <article key={r.id} className="rounded-xl border p-3" aria-labelledby={`r-${r.id}`}>
+        <article
+          key={r.id}
+          className="rounded-xl border p-3"
+          aria-labelledby={`r-${r.id}`}
+        >
+          {/* Recipe header */}
           <header className="mb-1">
             <h3 id={`r-${r.id}`} className="text-base font-semibold">
               {r.name}
@@ -20,6 +33,7 @@ export default function RecipePanel({ recipes }: { recipes: RecipeJSON[] }) {
             </p>
           </header>
 
+          {/* Ingredient list */}
           <section className="mb-2">
             <div className="mb-1 text-sm font-medium">Ingredients</div>
             <ul className="list-disc pl-6 text-sm" aria-label="Ingredients">
@@ -31,6 +45,7 @@ export default function RecipePanel({ recipes }: { recipes: RecipeJSON[] }) {
             </ul>
           </section>
 
+          {/* Preparation steps with optional timers */}
           <section>
             <div className="mb-1 text-sm font-medium">Steps</div>
             <ol className="list-decimal pl-6 text-sm">
@@ -50,11 +65,13 @@ export default function RecipePanel({ recipes }: { recipes: RecipeJSON[] }) {
             </ol>
           </section>
 
+          {/* Nutrition summary */}
           <footer className="mt-2 text-xs text-neutral-600">
-            Nutrition: {r.nutrition.kcal} kcal • P {r.nutrition.protein_g}g • C {r.nutrition.carbs_g}
-            g • F {r.nutrition.fat_g}g
+            Nutrition: {r.nutrition.kcal} kcal • P {r.nutrition.protein_g}g • C{" "}
+            {r.nutrition.carbs_g}g • F {r.nutrition.fat_g}g
           </footer>
 
+          {/* Optional warnings */}
           {r.warnings?.length ? (
             <div className="mt-2 rounded-md border border-amber-300 bg-amber-50 p-2 text-xs text-amber-900">
               <div className="font-medium">Warnings</div>
@@ -66,6 +83,7 @@ export default function RecipePanel({ recipes }: { recipes: RecipeJSON[] }) {
             </div>
           ) : null}
 
+          {/* Optional video previews */}
           {r.videos?.length ? (
             <section className="mt-3">
               <div className="text-sm font-medium">Videos</div>
@@ -77,7 +95,7 @@ export default function RecipePanel({ recipes }: { recipes: RecipeJSON[] }) {
                     className="flex items-center gap-2 rounded border p-2 text-left"
                     aria-label={`Play ${v.title}`}
                   >
-                    {/* If a thumbnail is provided by the stub/real API, show it; else fallback to a square */}
+                    {/* Thumbnail when available, otherwise a placeholder */}
                     {"thumbnail" in v && v.thumbnail ? (
                       <img
                         src={v.thumbnail}
@@ -87,7 +105,9 @@ export default function RecipePanel({ recipes }: { recipes: RecipeJSON[] }) {
                     ) : (
                       <div className="h-10 w-16 flex-shrink-0 rounded bg-neutral-200" />
                     )}
-                    <span className="line-clamp-2 text-xs underline">{v.title}</span>
+                    <span className="line-clamp-2 text-xs underline">
+                      {v.title}
+                    </span>
                   </button>
                 ))}
               </div>
@@ -96,6 +116,7 @@ export default function RecipePanel({ recipes }: { recipes: RecipeJSON[] }) {
         </article>
       ))}
 
+      {/* Video playback modal */}
       <Modal
         open={!!video}
         title={video ? `Playing: ${video.title}` : "Video"}

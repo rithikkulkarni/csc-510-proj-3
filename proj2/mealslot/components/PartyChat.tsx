@@ -1,3 +1,24 @@
+/**
+ * PartyChat
+ * ------------------------------------------------------------
+ * Client-side realtime chat panel for a specific party code.
+ *
+ * Responsibilities:
+ * - Subscribes to a shared realtime transport (provided via `onGetRealtime`)
+ *   and listens for `"chat"` events.
+ * - Filters incoming messages by `code` so only messages for the current party
+ *   are rendered.
+ * - Lets the local user send messages with their `nickname`; messages are
+ *   emitted over the shared realtime connection and appended optimistically
+ *   to the local log.
+ *
+ * Intended usage:
+ * - Used inside the party experience alongside the shared spin machine.
+ * - Parent passes a `code` (room identifier), the local `nickname`, and a
+ *   function `onGetRealtime` that resolves to `{ emit, on }` from PartyClient
+ *   so that all party widgets reuse the same realtime connection.
+ */
+
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";

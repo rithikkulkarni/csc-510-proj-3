@@ -1,6 +1,34 @@
+/**
+ * PartyMap
+ * ------------------------------------------------------------
+ * Client-side Google Maps view for Party mode.
+ *
+ * Responsibilities:
+ * - Renders a single Google Map centered on the user’s location, if available.
+ * - Falls back to a default coordinate near Centennial Campus when geolocation
+ *   is disabled or fails.
+ * - Drops a marker at the computed center to represent “You”.
+ * - Loads the Google Maps JS API via <Script> using
+ *   `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` and a global callback `_partyMapInit`.
+ *
+ * Key behaviors:
+ * - On mount, registers `window._partyMapInit = initMap`, which is invoked by
+ *   the Google Maps script’s `callback` parameter once the API is ready.
+ * - `initMap`:
+ *   • Resolves a `center` coordinate via `navigator.geolocation` (if allowed)
+ *   • Creates a new `google.maps.Map` attached to the local `div` ref
+ *   • Adds a dropping marker at the center
+ *
+ * Usage:
+ * - <PartyMap />           → 360px tall map centered near the user
+ * - <PartyMap height={240} /> or <PartyMap height="50vh" /> to adjust height
+ * - `useBrowserLocation={false}` to always use the fallback centroid.
+ */
+
 "use client";
 
-import React, {useEffect, useRef} from "react";
+import React from "react";
+import { useEffect, useRef } from "react";
 import Script from "next/script";
 
 type Props = {

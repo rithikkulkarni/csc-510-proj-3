@@ -1,83 +1,129 @@
 // app/context/UserContext.tsx
 "use client";
 
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from "react";
 import { client } from "@/stack/client";
 import { getUserDetails } from "../actions";
 
-type UserProfile = {
-    id: string;
-    auth_id?: string | null;
-    name: string;
-    allergens?: string[];
-    savedMeals?: string[];
-    allAllergens?: string[];
-} | null;
+/**
+ * UserProfile
+ * ---------------------------------------------------
+ * Shape of the user object exposed to the client.
+ * Combines identity (id) with app-specific profile fields.
+ */
+type UserProfile =
+  | {
+      id: string;
+      auth_id?: string | null;
+      name: string;
+      allergens?: string[];
+      savedMeals?: string[];
+      allAllergens?: string[];
+    }
+  | null;
 
+/**
+ * UserContextType
+ * ---------------------------------------------------
+ * Values exposed via the UserContext:
+ * - user: current user profile (or null)
+ * - setUser: direct setter for local state
+ * - refreshUser: reloads the profile from the backend/auth provider
+ */
 type UserContextType = {
-    user: UserProfile;
-    setUser: (user: UserProfile) => void;
-    refreshUser: () => Promise<void>;
+  user: UserProfile;
+  setUser: (user: UserProfile) => void;
+  refreshUser: () => Promise<void>;
 };
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
+/**
+ * UserProvider
+ * ---------------------------------------------------
+ * Top-level provider that wires the authenticated Stack/Neon user
+ * to the app's own user profile stored in the database.
+ *
+ * Responsibilities:
+ * - On mount, call refreshUser to hydrate the profile.
+ * - Expose user, setUser, and refreshUser to the React tree.
+ */
 export function UserProvider({ children }: { children: ReactNode }) {
-    const [user, setUser] = useState<UserProfile>(null);
+  const [user, setUser] = useState<UserProfile>(null);
 
-    const refreshUser = async () => {
-        try {
-            const neonUser = await client.getUser();
-            if (!neonUser) {
-                setUser(null);
-                return;
-            }
+  /**
+   * Reload the user from the auth client and app DB.
+   * - If no auth user is present, clear the profile.
+   * - Otherwise, call getUserDetails(neonUser.id) and map into UserProfile.
+   */
+  const refreshUser = async () => {
+    try {
+      const neonUser = await client.getUser();
+      if (!neonUser) {
+        setUser(null);
+        return;
+      }
 
-            const profile = await getUserDetails(neonUser.id);
-            if (profile) {
-                setUser({
-                    id: neonUser.id,
-                    name: profile.name,
-                    savedMeals: profile.savedMeals || [],
-                    allergens: profile.allergens || [],
-                });
-            } else {
-                setUser(null);
-            }
-        } catch (err) {
-            console.error("Failed to load user:", err);
-            setUser(null);
-        }
-    };
+      const profile = await getUserDetails(neonUser.id);
+      if (profile) {
+        setUser({
+          id: neonUser.id,
+          name: profile.name,
+          savedMeals: profile.savedMeals || [],
+          allergens: profile.allergens || [],
+        });
+      } else {
+        setUser(null);
+      }
+    } catch (err) {
+      console.error("Failed to load user:", err);
+      setUser(null);
+    }
+  };
 
-    useEffect(() => {
-        refreshUser();
-    }, []);
+  // Hydrate user profile on initial mount
+  useEffect(() => {
+    refreshUser();
+  }, []);
 
-    return (
-        <UserContext.Provider value={{ user, setUser, refreshUser }}>
-            {children}
-        </UserContext.Provider>
-    );
+  return (
+    <UserContext.Provider value={{ user, setUser, refreshUser }}>
+      {children}
+    </UserContext.Provider>
+  );
 }
 
+/**
+ * useUser
+ * ---------------------------------------------------
+ * Convenience hook to access the UserContext.
+ *
+ * Behavior:
+ * - In normal runtime, throws if used outside <UserProvider>.
+ * - In test environment, returns a no-op stub instead to simplify
+ *   component unit tests that call useUser() without a provider.
+ */
 export function useUser() {
-    const context = useContext(UserContext);
-    // In tests we prefer to return a safe no-op stub instead of throwing so
-    // components that call `useUser()` can run without wrapping with the
-    // provider. This keeps tests simpler and avoids sprinkling providers in
-    // many unit tests.
-    if (!context) {
-        if (process.env.NODE_ENV === "test") {
-            return {
-                user: null,
-                setUser: () => { },
-                refreshUser: async () => { },
-            } as UserContextType;
-        }
+  const context = useContext(UserContext);
 
-        throw new Error("useUser must be used within a UserProvider");
+  if (!context) {
+    // Test-friendly fallback: safe stub rather than throwing
+    if (process.env.NODE_ENV === "test") {
+      return {
+        user: null,
+        setUser: () => {},
+        refreshUser: async () => {},
+      } as UserContextType;
     }
 
-    return context;
+    throw new Error("useUser must be used within a UserProvider");
+  }
+
+  return context;
 }

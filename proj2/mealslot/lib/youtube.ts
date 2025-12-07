@@ -1,3 +1,11 @@
+/**
+ * YouTube adapter
+ *
+ * Resolves a short list of YouTube-style video objects for a given query.
+ * When YOUTUBE_API_KEY is configured, it calls the YouTube Data API v3;
+ * otherwise it falls back to deterministic stub videos for stable UX
+ * in local/dev or offline environments.
+ */
 import "server-only";
 
 /**
@@ -5,9 +13,14 @@ import "server-only";
  * - If YOUTUBE_API_KEY is present, queries the YouTube Data API v3 (search.list).
  * - Otherwise returns deterministic stub videos.
  */
-
 export type YtStub = { id: string; title: string; url: string; thumbnail?: string };
 
+/**
+ * fnv1a
+ *
+ * Small, stable 32-bit FNV-1a hash used to derive deterministic
+ * pseudo-IDs from strings (e.g., for stub video IDs).
+ */
 function fnv1a(s: string): string {
   // small stable hash used for stub video IDs
   let h = 2166136261 >>> 0;
@@ -18,6 +31,13 @@ function fnv1a(s: string): string {
   return (h >>> 0).toString(36).slice(0, 11);
 }
 
+/**
+ * stubVideos
+ *
+ * Generates a small, deterministic set of YouTube-like video objects
+ * derived from the query. Used when the real YouTube API is not
+ * available or when falling back after an error.
+ */
 function stubVideos(query: string): YtStub[] {
   const salts = ["a", "b", "c", "d"];
   return salts.map((salt, i) => {
@@ -26,11 +46,24 @@ function stubVideos(query: string): YtStub[] {
       id,
       title: `${query} tutorial #${i + 1}`,
       url: `https://www.youtube.com/watch?v=${id}`,
-      thumbnail: `https://i.ytimg.com/vi/${id}/hqdefault.jpg`
+      thumbnail: `https://i.ytimg.com/vi/${id}/hqdefault.jpg`,
     };
   });
 }
 
+/**
+ * videoStubsFor
+ *
+ * Returns up to four YouTube-style video entries for the given query.
+ *
+ * Behavior:
+ * - With YOUTUBE_API_KEY:
+ *   - Calls the YouTube Data API v3 search endpoint.
+ *   - Normalizes the response into a list of YtStub items.
+ *   - Pads with deterministic stubs if fewer than four results are returned.
+ * - Without YOUTUBE_API_KEY or on error:
+ *   - Returns deterministic stub videos only.
+ */
 export async function videoStubsFor(query: string): Promise<YtStub[]> {
   const key = process.env.YOUTUBE_API_KEY;
   if (!key) return stubVideos(query);
@@ -43,13 +76,16 @@ export async function videoStubsFor(query: string): Promise<YtStub[]> {
       maxResults: "4",
       safeSearch: "strict",
       videoEmbeddable: "true",
-      part: "snippet"
+      part: "snippet",
     });
     const url = `https://www.googleapis.com/youtube/v3/search?${params.toString()}`;
     const res = await fetch(url, { method: "GET" });
     if (!res.ok) throw new Error(`YouTube ${res.status}`);
     const data = (await res.json()) as {
-      items?: { id?: { videoId?: string }; snippet?: { title?: string; thumbnails?: any } }[];
+      items?: {
+        id?: { videoId?: string };
+        snippet?: { title?: string; thumbnails?: any };
+      }[];
     };
 
     const out: YtStub[] =

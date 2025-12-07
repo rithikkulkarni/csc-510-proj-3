@@ -1,6 +1,17 @@
-// Deterministic RNG helpers. No secrets, no Date jitter outside seed bucket.
-// Uses xmur3 hashing + mulberry32 PRNG.
+/**
+ * Deterministic random number generators
+ *
+ * Provides seed-based, reproducible RNG utilities using a combination
+ * of xmur3 hashing and the mulberry32 PRNG. Designed for predictable
+ * randomness without relying on Date, Math.random, or secrets.
+ */
 
+/**
+ * xmur3
+ *
+ * Lightweight string hashing function that produces a 32-bit seed.
+ * Used to convert arbitrary strings into numeric seeds for PRNGs.
+ */
 function xmur3(str: string) {
   let h = 1779033703 ^ str.length;
   for (let i = 0; i < str.length; i++) {
@@ -15,6 +26,13 @@ function xmur3(str: string) {
   };
 }
 
+/**
+ * mulberry32
+ *
+ * Fast, simple pseudo-random number generator that outputs values
+ * in the range [0, 1). Intended for non-cryptographic use cases
+ * such as shuffling, deterministic sampling, or UI randomness.
+ */
 function mulberry32(a: number) {
   let t = a >>> 0;
   return function () {
@@ -26,7 +44,11 @@ function mulberry32(a: number) {
 }
 
 /**
- * Make a deterministic RNG in [0,1) from any seed string.
+ * makeDeterministicRng
+ *
+ * Creates a deterministic RNG function that returns numbers in [0, 1)
+ * based on the provided seed string. The same seed will always produce
+ * the same sequence of values.
  */
 export function makeDeterministicRng(seed: string): () => number {
   const seedFn = xmur3(seed);

@@ -1,3 +1,11 @@
+/**
+ * Weighted dish selection logic
+ *
+ * Implements deterministic, powerup-aware random selection for slot reels.
+ * Uses a seeded PRNG to make spins reproducible within a 10-second time
+ * bucket and supports honoring locked dishes per reel.
+ */
+
 import { Dish, PowerUpsInput } from "./schemas";
 import { makeDeterministicRng } from "./rng";
 
@@ -24,6 +32,8 @@ function scoreDish(d: Dish, power: PowerUpsInput): number {
 
 /**
  * Deterministic weighted choice given an RNG in [0,1).
+ * Returns one item based on the relative weights or undefined
+ * if there are no valid weights/items.
  */
 function weightedChoice<T>(
   items: T[],
@@ -107,7 +117,6 @@ export function weightedSpin(
 
     out.push(pick);
   }
-
 
   return out;
 }

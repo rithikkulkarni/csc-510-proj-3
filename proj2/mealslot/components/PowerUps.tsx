@@ -1,3 +1,10 @@
+/**
+ * PowerUps UI component
+ *
+ * Renders a small set of toggleable pill buttons used to apply
+ * quick preference filters (e.g., healthy, cheap, fast) in the
+ * meal slot selection flow.
+ */
 "use client";
 
 import React from "react";
@@ -12,6 +19,7 @@ export function PowerUps({
   value: PowerUpsInput;
   onChange: (v: PowerUpsInput) => void;
 }) {
+  // Toggle a single flag while preserving remaining values
   const toggle = (k: keyof PowerUpsInput) =>
     onChange({ ...value, [k]: !value[k] });
 

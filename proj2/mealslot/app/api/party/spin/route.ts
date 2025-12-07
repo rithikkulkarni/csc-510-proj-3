@@ -29,23 +29,69 @@ export async function POST(req: Request) {
       slots?: Array<any | null>;
     } = body ?? {};
 
+    // If categories are missing or empty, use a single "dinner" bucket
     const cats: string[] =
       Array.isArray(categories) && categories.length ? categories : ["dinner"];
 
     // Local ultra-simple fallback menu (used only if /api/spin is unavailable).
     const fallbackMenu = [
-      { id: "fb_1", name: "Veggie Fried Rice", category: "dinner", tags: ["quick"], allergens: ["soy"], ytQuery: "veggie fried rice" },
-      { id: "fb_2", name: "Chicken Tacos", category: "dinner", tags: ["gluten free"], allergens: [], ytQuery: "chicken tacos easy" },
-      { id: "fb_3", name: "Mediterranean Grain Bowl", category: "dinner", tags: ["healthy"], allergens: ["dairy"], ytQuery: "mediterranean grain bowl" },
-      { id: "fb_4", name: "Pesto Pasta", category: "dinner", tags: [], allergens: ["gluten", "dairy"], ytQuery: "pesto pasta" },
-      { id: "fb_5", name: "Fruit Yogurt Cup", category: "dessert", tags: ["healthy"], allergens: ["dairy"], ytQuery: "fruit yogurt parfait" },
-      { id: "fb_6", name: "Garlic Bread", category: "side", tags: [], allergens: ["gluten", "dairy"], ytQuery: "garlic bread" },
+      {
+        id: "fb_1",
+        name: "Veggie Fried Rice",
+        category: "dinner",
+        tags: ["quick"],
+        allergens: ["soy"],
+        ytQuery: "veggie fried rice",
+      },
+      {
+        id: "fb_2",
+        name: "Chicken Tacos",
+        category: "dinner",
+        tags: ["gluten free"],
+        allergens: [],
+        ytQuery: "chicken tacos easy",
+      },
+      {
+        id: "fb_3",
+        name: "Mediterranean Grain Bowl",
+        category: "dinner",
+        tags: ["healthy"],
+        allergens: ["dairy"],
+        ytQuery: "mediterranean grain bowl",
+      },
+      {
+        id: "fb_4",
+        name: "Pesto Pasta",
+        category: "dinner",
+        tags: [],
+        allergens: ["gluten", "dairy"],
+        ytQuery: "pesto pasta",
+      },
+      {
+        id: "fb_5",
+        name: "Fruit Yogurt Cup",
+        category: "dessert",
+        tags: ["healthy"],
+        allergens: ["dairy"],
+        ytQuery: "fruit yogurt parfait",
+      },
+      {
+        id: "fb_6",
+        name: "Garlic Bread",
+        category: "side",
+        tags: [],
+        allergens: ["gluten", "dairy"],
+        ytQuery: "garlic bread",
+      },
     ];
 
     const used = new Set<string>();
-    const addUsed = (d: any) => { const id = String(d?.id ?? ""); if (id) used.add(id); };
+    const addUsed = (d: any) => {
+      const id = String(d?.id ?? "");
+      if (id) used.add(id);
+    };
 
-    // Seed locked slots (and mark as used)
+    // Seed locked slots with the provided dishes and mark them as used
     const out: [any | null, any | null, any | null] = [null, null, null];
     for (let i = 0; i < 3; i++) {
       if (locked[i] && slots?.[i]) {
@@ -54,12 +100,19 @@ export async function POST(req: Request) {
       }
     }
 
-    // Call same-origin /api/spin safely
+    /**
+     * Safely call the internal /api/spin endpoint once.
+     * - Randomly picks one category from `cats`.
+     * - Passes through powerups/constraints.
+     * - If anything goes wrong, returns the fallback menu.
+     */
     const callSingle = async (): Promise<any[]> => {
       try {
         const spinUrl = new URL("/api/spin", url);
-        // Pick a random category from the list, or default to "dinner"
-        const selectedCategory = cats.length > 0 ? cats[Math.floor(Math.random() * cats.length)] : "dinner";
+        const selectedCategory =
+          cats.length > 0
+            ? cats[Math.floor(Math.random() * cats.length)]
+            : "dinner";
 
         const r = await fetch(spinUrl.toString(), {
           method: "POST",
@@ -67,8 +120,8 @@ export async function POST(req: Request) {
           body: JSON.stringify({
             category: selectedCategory,
             powerups,
-            allergens: constraints?.allergens || [], // Extract allergens from constraints
-            tags: constraints?.tags || []
+            allergens: constraints?.allergens || [],
+            tags: constraints?.tags || [],
           }),
           cache: "no-store",
         });
@@ -82,6 +135,9 @@ export async function POST(req: Request) {
       }
     };
 
+    /**
+     * Pick the first dish from `arr` that has not yet been used.
+     */
     const pickFresh = (arr: any[]) => {
       for (const d of arr || []) {
         const id = String(d?.id ?? "");
@@ -93,7 +149,7 @@ export async function POST(req: Request) {
       return null;
     };
 
-    // Try up to a few pulls to fill the three slots
+    // Try multiple pulls to fill the three slots while deduping
     for (let tries = 0; tries < 6; tries++) {
       for (let i = 0; i < 3; i++) {
         if (locked[i] || out[i]) continue;
@@ -104,21 +160,55 @@ export async function POST(req: Request) {
       if (out[0] && out[1] && out[2]) break;
     }
 
-    // Guaranteed placeholders
+    // Guaranteed placeholders for any missing slot
     const mk = (i: number) =>
-      out[i] ||
-      { id: `placeholder_${i}`, name: "No options", category: "unknown", tags: [], allergens: [], ytQuery: "quick recipe" };
+      out[i] || {
+        id: `placeholder_${i}`,
+        name: "No options",
+        category: "unknown",
+        tags: [],
+        allergens: [],
+        ytQuery: "quick recipe",
+      };
 
     const triple = [mk(0), mk(1), mk(2)] as [any, any, any];
 
-    return NextResponse.json({ code, selection: triple, meta: { deduped: true } }, { status: 200 });
+    return NextResponse.json(
+      { code, selection: triple, meta: { deduped: true } },
+      { status: 200 }
+    );
   } catch (err: any) {
-    // Even if JSON parsing, etc. fails, still respond safely
+    // Even if JSON parsing, etc. fails, still respond safely with placeholders
     const triple = [
-      { id: "placeholder_0", name: "No options", category: "unknown", tags: [], allergens: [], ytQuery: "quick recipe" },
-      { id: "placeholder_1", name: "No options", category: "unknown", tags: [], allergens: [], ytQuery: "quick recipe" },
-      { id: "placeholder_2", name: "No options", category: "unknown", tags: [], allergens: [], ytQuery: "quick recipe" },
+      {
+        id: "placeholder_0",
+        name: "No options",
+        category: "unknown",
+        tags: [],
+        allergens: [],
+        ytQuery: "quick recipe",
+      },
+      {
+        id: "placeholder_1",
+        name: "No options",
+        category: "unknown",
+        tags: [],
+        allergens: [],
+        ytQuery: "quick recipe",
+      },
+      {
+        id: "placeholder_2",
+        name: "No options",
+        category: "unknown",
+        tags: [],
+        allergens: [],
+        ytQuery: "quick recipe",
+      },
     ] as [any, any, any];
-    return NextResponse.json({ error: err?.message || "Recovered", selection: triple }, { status: 200 });
+
+    return NextResponse.json(
+      { error: err?.message || "Recovered", selection: triple },
+      { status: 200 }
+    );
   }
 }
