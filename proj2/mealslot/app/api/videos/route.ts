@@ -2,15 +2,25 @@ import "server-only";
 import { NextRequest } from "next/server";
 import { z } from "zod";
 
+/**
+ * Request body schema for YouTube recipe lookup.
+ * - dishes: non-empty list of dish names to search for.
+ */
 const Body = z.object({
   dishes: z.array(z.string().min(1)).min(1),
 });
 
 const YOUTUBE_KEY = process.env.YOUTUBE_API_KEY;
 if (!YOUTUBE_KEY) {
+  // Warn in dev/test when key is missing; endpoint will fall back to stubs.
   console.warn("Missing YOUTUBE_API_KEY environment variable");
 }
 
+/**
+ * Search YouTube for recipe videos by query string.
+ * - Returns up to maxResults entries.
+ * - On error or missing key, returns an empty result set with an error code.
+ */
 async function searchYouTube(query: string, maxResults = 2) {
   if (!YOUTUBE_KEY) return { results: [], error: "missing_key" };
 
@@ -26,6 +36,17 @@ async function searchYouTube(query: string, maxResults = 2) {
   return { results, error: null };
 }
 
+/**
+ * POST /api/videos
+ * ---------------------------------------------------
+ * Returns recipe video suggestions for a list of dishes.
+ *
+ * Responsibilities:
+ * - Validate dish names from the request body.
+ * - For each dish, query YouTube (or fall back to stubbed videos).
+ * - Normalize results into a consistent structure keyed by dish.
+ * - Collect per-dish errors and return them alongside partial results.
+ */
 export async function POST(req: NextRequest) {
   const json = await req.json().catch(() => ({}));
   const parsed = Body.safeParse(json);
@@ -37,11 +58,13 @@ export async function POST(req: NextRequest) {
   }
 
   const { dishes } = parsed.data;
+
   const responseObj: {
     results: Record<string, Array<Record<string, any>>>;
     errors: Array<{ dish: string; message: string }>;
   } = { results: {}, errors: [] };
 
+  // For each dish, perform a YouTube search and normalize the output
   const jobs = dishes.map(async (dish) => {
     try {
       const { results, error } = await searchYouTube(`${dish} recipe`, 2);
@@ -61,14 +84,17 @@ export async function POST(req: NextRequest) {
 
       responseObj.results[dish] = mapped;
     } catch (err: any) {
-      responseObj.errors.push({ dish, message: err?.message ?? String(err) });
+      responseObj.errors.push({
+        dish,
+        message: err?.message ?? String(err),
+      });
       responseObj.results[dish] = [];
     }
   });
 
   await Promise.all(jobs);
 
-  // fallback stub if key missing
+  // Fallback stub data when the API key is missing
   if (!YOUTUBE_KEY) {
     const stub = dishes.reduce((acc: any, d: string) => {
       acc[d] = [
@@ -89,6 +115,7 @@ export async function POST(req: NextRequest) {
       ];
       return acc;
     }, {});
+
     return Response.json({
       results: stub,
       errors: [],
