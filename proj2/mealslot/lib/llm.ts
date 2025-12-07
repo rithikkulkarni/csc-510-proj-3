@@ -1,3 +1,12 @@
+/**
+ * Recipes adapter
+ *
+ * Generates structured recipe data for a list of dishes. When an
+ * OpenAI API key is available, it calls the Chat Completions API with
+ * a strict JSON schema; otherwise it falls back to deterministic,
+ * name-derived stub recipes. Both paths attach normalized YouTube
+ * video metadata for each dish.
+ */
 import "server-only";
 import { Dish, RecipeJSON } from "./schemas";
 
@@ -8,7 +17,6 @@ type Yt = { id: string; title: string; url: string; thumbnail?: string };
  * - If OPENAI_API_KEY is present, calls OpenAI with a strict JSON schema.
  * - Otherwise generates deterministic, name-derived recipes (stub).
  */
-
 const SYS_PROMPT = `
 You are a meticulous recipe generator. Output ONLY JSON that conforms to the provided JSON Schema.
 Do not include commentary. Provide precise, practical ingredient quantities and steps.
@@ -31,10 +39,10 @@ const RECIPE_JSON_SCHEMA: any = {
         properties: {
           item: { type: "string" },
           qty: { type: "number" },
-          unit: { type: "string" }
+          unit: { type: "string" },
         },
-        required: ["item", "qty", "unit"]
-      }
+        required: ["item", "qty", "unit"],
+      },
     },
     steps: {
       type: "array",
@@ -44,10 +52,10 @@ const RECIPE_JSON_SCHEMA: any = {
         properties: {
           order: { type: "integer" },
           text: { type: "string" },
-          timer_minutes: { type: "integer" }
+          timer_minutes: { type: "integer" },
         },
-        required: ["order", "text", "timer_minutes"]
-      }
+        required: ["order", "text", "timer_minutes"],
+      },
     },
     nutrition: {
       type: "object",
@@ -56,9 +64,9 @@ const RECIPE_JSON_SCHEMA: any = {
         kcal: { type: "number" },
         protein_g: { type: "number" },
         carbs_g: { type: "number" },
-        fat_g: { type: "number" }
+        fat_g: { type: "number" },
       },
-      required: ["kcal", "protein_g", "carbs_g", "fat_g"]
+      required: ["kcal", "protein_g", "carbs_g", "fat_g"],
     },
     warnings: { type: "array", items: { type: "string" } },
     videos: {
@@ -70,11 +78,11 @@ const RECIPE_JSON_SCHEMA: any = {
           id: { type: "string" },
           title: { type: "string" },
           url: { type: "string" },
-          thumbnail: { type: "string" }
+          thumbnail: { type: "string" },
         },
-        required: ["id", "title", "url"]
-      }
-    }
+        required: ["id", "title", "url"],
+      },
+    },
   },
   required: [
     "id",
@@ -84,10 +92,14 @@ const RECIPE_JSON_SCHEMA: any = {
     "equipment",
     "ingredients",
     "steps",
-    "nutrition"
-  ]
+    "nutrition",
+  ],
 };
 
+/**
+ * Splits a dish name into simple tokens used to build stub
+ * ingredient names when OpenAI is not available.
+ */
 function tokensFromName(name: string) {
   return name
     .toLowerCase()
@@ -96,6 +108,11 @@ function tokensFromName(name: string) {
     .filter(Boolean);
 }
 
+/**
+ * Stub recipe generator used when no OpenAI API key is configured.
+ * Produces deterministic, time-band-aware recipes and normalizes
+ * video metadata to a safe shape.
+ */
 function stubRecipe(d: Dish, idx: number, videos: Yt[]): RecipeJSON {
   const [a = "ingredient", b = "sauce", c = "herb"] = tokensFromName(d.name);
   const fast = d.timeBand === 1;
@@ -104,13 +121,17 @@ function stubRecipe(d: Dish, idx: number, videos: Yt[]): RecipeJSON {
     { item: a, qty: 2, unit: "pc" },
     { item: `${b}`, qty: fast ? 150 : 250, unit: "g" },
     { item: "olive oil", qty: 1, unit: "tbsp" },
-    { item: c, qty: 5, unit: "g" }
+    { item: c, qty: 5, unit: "g" },
   ];
 
   const steps = [
     { order: 1, text: `Prep ${a} and ${c}; warm ${b}.`, timer_minutes: 5 },
-    { order: 2, text: `Cook ${a} with ${b} on medium.`, timer_minutes: fast ? 10 : 20 },
-    { order: 3, text: "Season and serve.", timer_minutes: 0 }
+    {
+      order: 2,
+      text: `Cook ${a} with ${b} on medium.`,
+      timer_minutes: fast ? 10 : 20,
+    },
+    { order: 3, text: "Season and serve.", timer_minutes: 0 },
   ];
 
   const safeVideos = videos.map((v) => ({
@@ -132,24 +153,38 @@ function stubRecipe(d: Dish, idx: number, videos: Yt[]): RecipeJSON {
       kcal: d.isHealthy ? 420 : 520,
       protein_g: d.category === "meat" ? 35 : 28,
       carbs_g: d.costBand === 1 ? 40 : 45,
-      fat_g: d.isHealthy ? 12 : 24
+      fat_g: d.isHealthy ? 12 : 24,
     },
     warnings: [],
     videos: safeVideos,
   };
 }
 
-
+/**
+ * recipesViaOpenAI
+ *
+ * Given a list of dishes and a video lookup function, returns a list
+ * of RecipeJSON objects. Behavior:
+ *
+ * - If OPENAI_API_KEY is missing:
+ *   - Fetches YouTube videos per dish via videoLookup.
+ *   - Returns deterministic stub recipes enriched with those videos.
+ *
+ * - If OPENAI_API_KEY is present:
+ *   - Calls the OpenAI Chat Completions API with a strict JSON schema.
+ *   - Parses and lightly post-processes the response into RecipeJSON.
+ *   - On any error, falls back to the stub recipe for that dish.
+ */
 export async function recipesViaOpenAI(
   dishes: Dish[],
-  videoLookup: (query: string) => Promise<Yt[]>
+  videoLookup: (query: string) => Promise<Yt[]>,
 ): Promise<RecipeJSON[]> {
   const key = process.env.OPENAI_API_KEY;
 
   // ── No API key: use deterministic stub recipes ────────────────────────────────
   if (!key) {
     const allRawVideos = await Promise.all(
-      dishes.map((d) => videoLookup(d.ytQuery))
+      dishes.map((d) => videoLookup(d.ytQuery)),
     );
 
     // Normalize thumbnails so they’re always strings
@@ -159,7 +194,7 @@ export async function recipesViaOpenAI(
         title: v.title,
         url: v.url,
         thumbnail: v.thumbnail ?? "",
-      }))
+      })),
     );
 
     return dishes.map((d, i) => stubRecipe(d, i, allSafeVideos[i] ?? []));
@@ -250,4 +285,3 @@ Return ONLY JSON.
 
   return out;
 }
-

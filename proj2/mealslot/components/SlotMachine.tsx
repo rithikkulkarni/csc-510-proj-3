@@ -1,3 +1,10 @@
+/**
+ * SlotMachine component
+ *
+ * Renders the main multi-reel slot machine UI for meal selection.
+ * Handles reel locking, per-slot category selection, cooldown-controlled
+ * spinning, and integration with saved meals and the parent spin handler.
+ */
 "use client";
 
 import React from "react";
@@ -32,12 +39,15 @@ export function SlotMachine({
   slotCategories = [],
   onCategoryChange,
 }: Props) {
+  // Map of reel index -> locked dish ID
   const [locked, setLocked] = useState<Record<number, string>>({});
 
+  // Reset locks whenever the number of reels changes
   useEffect(() => {
     setLocked({});
   }, [reelCount]);
 
+  // Convert locked map to a stable array structure used by onSpin
   const lockedArray: Locked[] = useMemo(
     () =>
       Object.entries(locked)
@@ -46,6 +56,7 @@ export function SlotMachine({
     [locked],
   );
 
+  // Ensure we have a unique list of dishes for reels, with backfill if needed
   const uniqueSelection: (Dish | undefined)[] = useMemo(() => {
     const seen = new Set<string>();
     const uniques: Dish[] = [];
@@ -69,6 +80,7 @@ export function SlotMachine({
     return uniques;
   }, [selection, reelCount]);
 
+  // Index-aligned list of dishes per reel
   const dishesByIndex: (Dish | undefined)[] = useMemo(() => {
     const out: (Dish | undefined)[] = [];
     for (let i = 0; i < reelCount; i++) {
@@ -77,9 +89,10 @@ export function SlotMachine({
     return out;
   }, [reelCount, uniqueSelection]);
 
+  // String signature of selection used to detect changes
   const selectionIds = (uniqueSelection ?? []).map((d) => d?.id ?? "").join("|");
 
-
+  // Maintain locks only for reels whose dish hasn't changed
   useEffect(() => {
     const next: Record<number, string> = {};
     dishesByIndex.forEach((d, i) => {
@@ -91,7 +104,7 @@ export function SlotMachine({
     setLocked(next);
   }, [selectionIds]);
 
-
+  // Toggle lock for a given reel index
   const toggleLock = (i: number) => {
     setLocked((prev) => {
       const cur = { ...prev };
@@ -161,7 +174,10 @@ export function SlotMachine({
                       locked={!!locked[i]}
                       onToggle={() => toggleLock(i)}
                       spinning={!!busy}
-                      saved={!!dishesByIndex[i] && !!savedMeals?.includes(dishesByIndex[i]!.id)}
+                      saved={
+                        !!dishesByIndex[i] &&
+                        !!savedMeals?.includes(dishesByIndex[i]!.id)
+                      }
                       onToggleSave={(d) => onToggleSave?.(d)}
                     />
                   </div>
@@ -204,7 +220,9 @@ export function SlotMachine({
               {canSpin ? "✨ SPIN!" : "SPIN"}
             </button>
           </div>
-          <p className="text-xs text-white/80 text-center font-semibold">{statusMessage}</p>
+          <p className="text-xs text-white/80 text-center font-semibold">
+            {statusMessage}
+          </p>
         </div>
       </div>
       <style jsx>{`

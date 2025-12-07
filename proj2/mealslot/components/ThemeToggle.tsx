@@ -1,15 +1,23 @@
 // --- path: components/ThemeToggle.tsx ---
+/**
+ * ThemeToggle component
+ *
+ * Provides a small, always-on-top toggle for switching between light
+ * and dark themes. Reads and writes the chosen theme to <html> and
+ * persists the choice in localStorage, respecting system preference
+ * on first load.
+ */
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
 
 /**
- * ThemeToggle
- * - Knob slides immediately via local state.
- * - Flips <html class="dark"> and persists to localStorage.
- * - z-50 + pointer-events-auto so overlays don't block it.
- * - Handles click, pointerdown (mobile), keyboard.
- * - Shows a live label for sanity checks.
+ * Renders an accessible theme switcher with immediate visual feedback.
+ *
+ * - Uses local state so the knob animates instantly.
+ * - Applies/removes the "dark" class on <html>.
+ * - Persists the theme in localStorage for future visits.
+ * - Supports mouse, touch, and keyboard interactions.
  */
 export default function ThemeToggle() {
   const rootRef = useRef<HTMLDivElement | null>(null);
@@ -20,7 +28,7 @@ export default function ThemeToggle() {
     document.documentElement.classList.toggle("dark", dark);
     try {
       localStorage.setItem("theme", dark ? "dark" : "light");
-    } catch { }
+    } catch {}
   };
 
   useEffect(() => {
@@ -49,7 +57,9 @@ export default function ThemeToggle() {
     return (
       <div className="relative z-50 pointer-events-auto flex items-center gap-2">
         <div className="h-6 w-12 rounded-full border-2 border-[#d6e4ea] bg-white shadow-[0_6px_18px_rgba(0,0,0,0.08)]" />
-        <span className="rounded-full border border-[#d6e4ea] bg-[#f0f7fa] px-2 py-1 text-[11px] font-semibold text-[#48606c] shadow-sm">…</span>
+        <span className="rounded-full border border-[#d6e4ea] bg-[#f0f7fa] px-2 py-1 text-[11px] font-semibold text-[#48606c] shadow-sm">
+          …
+        </span>
       </div>
     );
   }

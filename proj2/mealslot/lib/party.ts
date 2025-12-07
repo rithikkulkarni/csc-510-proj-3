@@ -1,7 +1,25 @@
+/**
+ * Party preferences and constraints
+ *
+ * Defines Zod schemas for individual user preferences, merged party
+ * constraints, and overall party state. Also provides utilities for
+ * merging multiple members' preferences into a single constraint set
+ * and generating a deterministic 6-character party code.
+ */
+
 import { z } from "zod";
 
 /** ---- Types & Validation ---- */
-export const DietEnum = z.enum(["omnivore", "vegetarian", "vegan", "pescatarian", "keto", "none"]);
+
+export const DietEnum = z.enum([
+  "omnivore",
+  "vegetarian",
+  "vegan",
+  "pescatarian",
+  "keto",
+  "none",
+]);
+
 // Baseline fallback allergens; final options come from dishes table at runtime.
 // Kept as an array only for UI fallback; we no longer export a Zod enum so that
 // arbitrary allergens from the DB pass validation.
@@ -14,7 +32,7 @@ export const ALLERGEN_OPTIONS = [
   "tree_nut",
   "shellfish",
   "fish",
-  "sesame"
+  "sesame",
 ];
 
 export const PrefsSchema = z.object({
@@ -22,7 +40,7 @@ export const PrefsSchema = z.object({
   diet: DietEnum.optional(),
   allergens: z.array(z.string()).optional(),
   budgetBand: z.number().int().min(1).max(3).optional(), // 1=cheap 3=expensive
-  timeBand: z.number().int().min(1).max(3).optional() // 1=fast 3=slow-ok
+  timeBand: z.number().int().min(1).max(3).optional(), // 1=fast 3=slow-ok
 });
 export type Prefs = z.infer<typeof PrefsSchema>;
 
@@ -30,7 +48,7 @@ export const ConstraintsSchema = z.object({
   diet: z.array(DietEnum).optional(), // merged = AND across users (strictest)
   allergens: z.array(z.string()).optional(), // merged = UNION across users
   budgetBand: z.number().int().min(1).max(3).optional(), // merged = MIN
-  timeBand: z.number().int().min(1).max(3).optional() // merged = MIN
+  timeBand: z.number().int().min(1).max(3).optional(), // merged = MIN
 });
 export type Constraints = z.infer<typeof ConstraintsSchema>;
 
@@ -39,25 +57,42 @@ export const PartyStateSchema = z.object({
     id: z.string(),
     code: z.string().length(6),
     isActive: z.boolean(),
-    constraints: ConstraintsSchema
+    constraints: ConstraintsSchema,
   }),
   members: z.array(
     z.object({
       id: z.string(),
       nickname: z.string().optional(),
-      prefs: PrefsSchema
-    })
-  )
+      prefs: PrefsSchema,
+    }),
+  ),
 });
 export type PartyState = z.infer<typeof PartyStateSchema>;
 
 /** ---- Merge Logic ---- */
+
+/**
+ * mergeConstraints
+ *
+ * Combines a list of individual preference objects into a single
+ * party-level Constraints object, plus:
+ * - a conflict flag when constraints are likely too strict
+ * - human-readable suggestions for resolving conflicts
+ *
+ * Merging rules:
+ * - diet: picks the strictest compatible "ethic" diet, treating keto as orthogonal
+ * - allergens: union across users
+ * - budgetBand: minimum (cheapest wins)
+ * - timeBand: minimum (fastest wins)
+ */
 export function mergeConstraints(prefsList: Prefs[]): {
   merged: Constraints;
   conflict: boolean;
   suggestions: string[];
 } {
-  const diets = prefsList.map((p) => p.diet).filter(Boolean) as z.infer<typeof DietEnum>[];
+  const diets = prefsList
+    .map((p) => p.diet)
+    .filter(Boolean) as z.infer<typeof DietEnum>[];
   const nonNone = diets.filter((d) => d !== "none");
   let dietMerged: z.infer<typeof DietEnum>[] | undefined;
 
@@ -65,25 +100,44 @@ export function mergeConstraints(prefsList: Prefs[]): {
     dietMerged = undefined; // no constraint
   } else {
     // Pick the strictest compatible “ethic” diet; keto is orthogonal (carb limit).
-    const strictness = { vegan: 4, vegetarian: 3, pescatarian: 2, omnivore: 1, keto: 2, none: 0 } as const;
-    const sorted = [...new Set(nonNone)].sort((a, b) => strictness[b] - strictness[a]);
-    const ethic = sorted.find((d) => d === "vegan" || d === "vegetarian" || d === "pescatarian" || d === "omnivore");
+    const strictness = {
+      vegan: 4,
+      vegetarian: 3,
+      pescatarian: 2,
+      omnivore: 1,
+      keto: 2,
+      none: 0,
+    } as const;
+    const sorted = [...new Set(nonNone)].sort(
+      (a, b) => strictness[b] - strictness[a],
+    );
+    const ethic = sorted.find(
+      (d) =>
+        d === "vegan" ||
+        d === "vegetarian" ||
+        d === "pescatarian" ||
+        d === "omnivore",
+    );
     dietMerged = [ethic ?? sorted[0]!];
   }
 
   const allergensMerged = Array.from(
     new Set(
-      prefsList.flatMap((p) => p.allergens ?? []).filter((a): a is string => !!a)
-    )
+      prefsList
+        .flatMap((p) => p.allergens ?? [])
+        .filter((a): a is string => !!a),
+    ),
   );
 
   const budgetMerged = prefsList.reduce<number | undefined>((min, p) => {
-    if (typeof p.budgetBand === "number") return Math.min(min ?? p.budgetBand, p.budgetBand);
+    if (typeof p.budgetBand === "number")
+      return Math.min(min ?? p.budgetBand, p.budgetBand);
     return min;
   }, undefined);
 
   const timeMerged = prefsList.reduce<number | undefined>((min, p) => {
-    if (typeof p.timeBand === "number") return Math.min(min ?? p.timeBand, p.timeBand);
+    if (typeof p.timeBand === "number")
+      return Math.min(min ?? p.timeBand, p.timeBand);
     return min;
   }, undefined);
 
@@ -98,7 +152,9 @@ export function mergeConstraints(prefsList: Prefs[]): {
 
   if (dietMerged && dietMerged.length === 0) {
     conflict = true;
-    suggestions.push("Remove conflicting diet restrictions (default to vegetarian).");
+    suggestions.push(
+      "Remove conflicting diet restrictions (default to vegetarian).",
+    );
   }
 
   if (merged.diet?.includes("vegan")) {
@@ -107,16 +163,24 @@ export function mergeConstraints(prefsList: Prefs[]): {
     const count = many.filter((a) => blocked.has(a)).length;
     if (count >= 3) {
       conflict = true;
-      suggestions.push("Too many allergens with vegan. Consider dropping one or relaxing to vegetarian.");
+      suggestions.push(
+        "Too many allergens with vegan. Consider dropping one or relaxing to vegetarian.",
+      );
     }
   }
 
   return { merged, conflict, suggestions };
 }
 
-/** Generate a 6-char code from a seed */
+/**
+ * partyCodeFromSeed
+ *
+ * Generates a deterministic 6-character uppercase code from a string
+ * seed using a simple hash. Used for human-friendly party codes.
+ */
 export function partyCodeFromSeed(seed: string): string {
   let h = 0;
-  for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) >>> 0;
+  for (let i = 0; i < seed.length; i++)
+    h = (h * 31 + seed.charCodeAt(i)) >>> 0;
   return (h >>> 0).toString(36).toUpperCase().padStart(6, "0").slice(0, 6);
 }

@@ -46,14 +46,35 @@ type User = {
 // -------------------------
 // HomePage
 // -------------------------
+/**
+ * HomePage (Solo mode)
+ * ---------------------------------------------------
+ * Main entry for the solo MealSlot experience:
+ * - Loads user (Stack/Neon, cached profile, or guest).
+ * - Manages filters, power-ups, and saved meals.
+ * - Calls /api/spin to generate dish selections.
+ * - Integrates with /api/videos for recipe videos.
+ * - Integrates with /api/places for nearby venues.
+ */
 function HomePage() {
   const [user, setUser] = useState<User | null>(null);
   const DISH_COUNT = 3; // Fixed at 3 for actual slot machine behavior
-  const [slotCategories, setSlotCategories] = useState<string[]>(["Breakfast", "Lunch", "Dinner"]);
+
+  const [slotCategories, setSlotCategories] = useState<string[]>([
+    "Breakfast",
+    "Lunch",
+    "Dinner",
+  ]);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [selectedAllergens, setSelectedAllergens] = useState<string[]>([]);
   const [savedMeals, setSavedMeals] = useState<string[]>([]);
-  const [allCategories] = useState<string[]>(["Breakfast", "Lunch", "Dinner", "Dessert", "Snack"]);
+  const [allCategories] = useState<string[]>([
+    "Breakfast",
+    "Lunch",
+    "Dinner",
+    "Dessert",
+    "Snack",
+  ]);
   const [powerups, setPowerups] = useState<PowerUpsInput>({});
   const [selection, setSelection] = useState<Dish[]>([]);
   const [busy, setBusy] = useState(false);
@@ -68,45 +89,67 @@ function HomePage() {
   // -------------------------
   useEffect(() => {
     async function fetchUser() {
-      const savedProfile = localStorage.getItem('userProfile');
+      // Prefer a cached profile from localStorage for snappy reloads
+      const savedProfile = localStorage.getItem("userProfile");
       if (savedProfile) {
         const parsed = JSON.parse(savedProfile);
         setUser(parsed);
-        setSelectedAllergens(Array.isArray(parsed?.allergens) ? parsed.allergens : []);
-        setSavedMeals(Array.isArray(parsed?.savedMeals) ? parsed.savedMeals : []);
+        setSelectedAllergens(
+          Array.isArray(parsed?.allergens) ? parsed.allergens : []
+        );
+        setSavedMeals(
+          Array.isArray(parsed?.savedMeals) ? parsed.savedMeals : []
+        );
         return;
       }
 
-
+      // Otherwise, look up the authenticated Stack/Neon user and hydrate profile
       const neonUser = await client.getUser();
       if (neonUser) {
         const profile = await getUserDetails(neonUser.id);
         if (profile) {
           setUser(profile);
-          setSelectedAllergens(Array.isArray(profile.allergens) ? profile.allergens : []);
-          setSavedMeals(Array.isArray(profile.savedMeals) ? profile.savedMeals : []);
+          setSelectedAllergens(
+            Array.isArray(profile.allergens) ? profile.allergens : []
+          );
+          setSavedMeals(
+            Array.isArray(profile.savedMeals) ? profile.savedMeals : []
+          );
           localStorage.setItem("userProfile", JSON.stringify(profile));
         }
-
-      } else if (localStorage.getItem('guestUser')) {
-        setUser({ name: 'Guest' });
+      } else if (localStorage.getItem("guestUser")) {
+        // Guest mode: lightweight identity with no persistence
+        setUser({ name: "Guest" });
       }
     }
 
     fetchUser();
   }, []);
 
+  /**
+   * Enable guest mode for users without an authenticated account.
+   * Persists a small flag so subsequent reloads remember the guest state.
+   */
   const handleGuest = () => {
     localStorage.setItem("guestUser", "true");
     setUser({ name: "Guest" });
   };
 
+  /**
+   * Clear both guest and authenticated profile information locally.
+   * Does not sign out from the auth provider itself, only local app state.
+   */
   const handleSignOut = () => {
     localStorage.removeItem("guestUser");
     localStorage.removeItem("userProfile"); // clear Neon Auth profile
     setUser(null);
   };
 
+  /**
+   * Toggle a dish ID in the savedMeals list.
+   * - Performs an optimistic UI update and keeps localStorage in sync.
+   * - For authenticated users, persists to the DB via updateUserDetails.
+   */
   const toggleSavedMeal = async (dish: Dish) => {
     const next = (() => {
       if (savedMeals.includes(dish.id)) {
@@ -138,8 +181,16 @@ function HomePage() {
         const updated = await updateUserDetails(authId, { savedMeals: next });
         if (updated?.savedMeals) {
           setSavedMeals(updated.savedMeals);
-          setUser((prev) => (prev ? { ...prev, savedMeals: updated.savedMeals } : prev));
-          localStorage.setItem("userProfile", JSON.stringify({ ...(cached ? JSON.parse(cached) : {}), savedMeals: updated.savedMeals }));
+          setUser((prev) =>
+            prev ? { ...prev, savedMeals: updated.savedMeals } : prev
+          );
+          localStorage.setItem(
+            "userProfile",
+            JSON.stringify({
+              ...(cached ? JSON.parse(cached) : {}),
+              savedMeals: updated.savedMeals,
+            })
+          );
         }
       } catch (err) {
         console.error("Failed to persist saved meals", err);
@@ -147,10 +198,14 @@ function HomePage() {
     }
   };
 
-
   // -------------------------
   // Derived cuisines
   // -------------------------
+  /**
+   * Derive cuisines to query venues by:
+   * - Use selected dish names when a selection exists.
+   * - Otherwise fall back to a few generic cuisines.
+   */
   const cuisines = useMemo(() => {
     const names = selection.map((d) => d.name).filter(Boolean);
     return names.length ? names : ["american", "asian", "italian"];
@@ -162,7 +217,10 @@ function HomePage() {
   useEffect(() => {
     let t: number | undefined;
     if (cooldownMs > 0) {
-      t = window.setInterval(() => setCooldownMs((ms) => Math.max(0, ms - 250)), 250);
+      t = window.setInterval(
+        () => setCooldownMs((ms) => Math.max(0, ms - 250)),
+        250
+      );
     }
     return () => {
       if (t) clearInterval(t);
@@ -172,6 +230,10 @@ function HomePage() {
   // -------------------------
   // Slot machine spin & other logic
   // -------------------------
+  /**
+   * Deduplicate dish selections (by id, or name+category fallback)
+   * to avoid showing the same dish multiple times across slots.
+   */
   const dedupeSelection = (items: Dish[]) => {
     const seen = new Set<string>();
     return items.filter((d) => {
@@ -182,6 +244,12 @@ function HomePage() {
     });
   };
 
+  /**
+   * Request a new spin from /api/spin and hydrate the UI with:
+   * - Unique selection.
+   * - Reset recipes/venues.
+   * - Trigger cooldown and video lookup.
+   */
   const onSpin = async (locked: { index: number; dishId: string }[]) => {
     setBusy(true);
     const res = await fetch("/api/spin", {
@@ -213,6 +281,10 @@ function HomePage() {
   };
 
   // Fetch videos
+  /**
+   * Fetch recipe videos for the given dishes via /api/videos.
+   * Populates videosByDish used by VideoPanel.
+   */
   const fetchVideos = async (dishes: Dish[]) => {
     if (!dishes.length) return;
     const res = await fetch("/api/videos", {
@@ -225,6 +297,11 @@ function HomePage() {
   };
 
   // Fetch venues
+  /**
+   * Fetch nearby venues for the derived cuisines via /api/places.
+   * - Uses geolocation coordinates when provided.
+   * - Falls back to a city-level hint (Denver) otherwise.
+   */
   const fetchVenues = async (coords?: { lat: number; lng: number }) => {
     const body: any = { cuisines };
     if (coords) {
@@ -243,7 +320,8 @@ function HomePage() {
     const j = await r.json();
     let normalized: any[] = [];
     if (Array.isArray(j.venues)) normalized = j.venues;
-    else if (j.results && typeof j.results === "object") normalized = Object.values(j.results).flat();
+    else if (j.results && typeof j.results === "object")
+      normalized = Object.values(j.results).flat();
     else if (Array.isArray(j)) normalized = j;
     setVenues(normalized);
   };
@@ -254,10 +332,11 @@ function HomePage() {
   return (
     <div className={shellClass}>
       <div className={contentClass}>
-        <header className={cn(cardClass, "flex flex-col gap-3")}
-        >
+        <header className={cn(cardClass, "flex flex-col gap-3")}>
           <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-brand-dusk/80 dark:text-brand-glow/90">
-            <span className="rounded-full bg-gradient-to-r from-brand-coral to-brand-gold px-2 py-1 text-brand-dusk shadow-soft">Solo</span>
+            <span className="rounded-full bg-gradient-to-r from-brand-coral to-brand-gold px-2 py-1 text-brand-dusk shadow-soft">
+              Solo
+            </span>
             <span>Spin &amp; Savor</span>
           </div>
           <div className="space-y-2">
@@ -265,7 +344,8 @@ function HomePage() {
               What should we eat today?
             </h1>
             <p className="text-sm md:text-base text-brand-dusk/80 dark:text-brand-glow/80">
-              Spin the reels, lock your favorites, and let MealSlot pick your next bite—cook at home or find a spot nearby.
+              Spin the reels, lock your favorites, and let MealSlot pick your
+              next bite—cook at home or find a spot nearby.
             </p>
           </div>
         </header>
@@ -279,35 +359,57 @@ function HomePage() {
             </span>
           </div>
           <p className="mt-2 text-sm text-brand-dusk/70 dark:text-brand-glow/80">
-            Pick a category for each slot above the reels below, or use the quick presets:
+            Pick a category for each slot above the reels below, or use the
+            quick presets:
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
             <button
-              className={cn(categoryPillBase, "text-brand-dusk hover:border-brand-gold/80 dark:text-white/80")}
-              onClick={() => setSlotCategories(["Breakfast", "Lunch", "Dinner"])}
+              className={cn(
+                categoryPillBase,
+                "text-brand-dusk hover:border-brand-gold/80 dark:text-white/80"
+              )}
+              onClick={() =>
+                setSlotCategories(["Breakfast", "Lunch", "Dinner"])
+              }
             >
               🍳 Full Day
             </button>
             <button
-              className={cn(categoryPillBase, "text-brand-dusk hover:border-brand-gold/80 dark:text-white/80")}
-              onClick={() => setSlotCategories(["Dinner", "Dinner", "Dessert"])}
+              className={cn(
+                categoryPillBase,
+                "text-brand-dusk hover:border-brand-gold/80 dark:text-white/80"
+              )}
+              onClick={() =>
+                setSlotCategories(["Dinner", "Dinner", "Dessert"])
+              }
             >
               🍽️ Dinner + Dessert
             </button>
             <button
-              className={cn(categoryPillBase, "text-brand-dusk hover:border-brand-gold/80 dark:text-white/80")}
+              className={cn(
+                categoryPillBase,
+                "text-brand-dusk hover:border-brand-gold/80 dark:text-white/80"
+              )}
               onClick={() => setSlotCategories(["Lunch", "Lunch", "Lunch"])}
             >
               🥗 All Lunch
             </button>
             <button
-              className={cn(categoryPillBase, "text-brand-dusk hover:border-brand-gold/80 dark:text-white/80")}
-              onClick={() => setSlotCategories(["Dessert", "Dessert", "Dessert"])}
+              className={cn(
+                categoryPillBase,
+                "text-brand-dusk hover:border-brand-gold/80 dark:text-white/80"
+              )}
+              onClick={() =>
+                setSlotCategories(["Dessert", "Dessert", "Dessert"])
+              }
             >
               🍰 All Desserts
             </button>
             <button
-              className={cn(categoryPillBase, "text-brand-dusk hover:border-brand-gold/80 dark:text-white/80")}
+              className={cn(
+                categoryPillBase,
+                "text-brand-dusk hover:border-brand-gold/80 dark:text-white/80"
+              )}
               onClick={() => setSlotCategories(["Snack", "Snack", "Snack"])}
             >
               🍿 All Snacks
@@ -326,9 +428,12 @@ function HomePage() {
               />
             </div>
             <div className="w-full md:w-1/3 space-y-4 border-t border-dashed border-neutral-200 pt-4 md:border-l md:border-t-0 md:pl-4">
-              <h3 className="text-sm font-semibold text-brand-dusk dark:text-white">Power-Ups</h3>
+              <h3 className="text-sm font-semibold text-brand-dusk dark:text-white">
+                Power-Ups
+              </h3>
               <p className={sectionSubtitleClass}>
-                Give the slot machine a nudge: healthier options, cheaper picks, or faster meals.
+                Give the slot machine a nudge: healthier options, cheaper picks,
+                or faster meals.
               </p>
               <PowerUps value={powerups} onChange={setPowerups} />
             </div>
@@ -364,61 +469,56 @@ function HomePage() {
         </section>
 
         {/* Selected dishes + actions */}
-        {
-          selection.length > 0 && (
-            <section
-              className={cn(
-                cardClass,
-                "animate-[fadeInUp_180ms_ease-out]",
-              )}
-            >
-              <h2 className={sectionTitleClass}>Selected Dishes</h2>
-              <ul className="mt-2 space-y-1.5 text-sm text-brand-dusk/90 dark:text-brand-glow/90">
-                {selection.map((d) => (
-                  <li key={d.id} className="flex items-baseline gap-2">
-                    <span className="inline-block h-1.5 w-1.5 rounded-full bg-gradient-to-r from-orange-500 to-rose-500" />
-                    <div>
-                      <span className="font-semibold text-brand-dusk dark:text-white">
-                        {d.name}
-                      </span>{" "}
-                      <span className="text-xs uppercase tracking-wide text-brand-dusk/60 dark:text-brand-glow/70">
-                        ({d.category})
-                      </span>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-              <div className="mt-4 flex flex-wrap gap-3">
-                <button
-                  className="btn-primary text-xs px-4 py-2"
-                  onClick={() => setOpenVideoModal(true)}
-                >
-                  🍳 Cook at Home
-                </button>
-                <button
-                  className="btn-ghost text-xs px-4 py-2"
-                  onClick={() => {
-                    if ("geolocation" in navigator) {
-                      navigator.geolocation.getCurrentPosition(
-                        (pos) =>
-                          fetchVenues({
-                            lat: pos.coords.latitude,
-                            lng: pos.coords.longitude,
-                          }),
-                        () => fetchVenues(),
-                        { maximumAge: 1000 * 60 * 5, timeout: 10000 },
-                      );
-                    } else {
-                      fetchVenues();
-                    }
-                  }}
-                >
-                  📍 Eat Outside
-                </button>
-              </div>
-            </section>
-          )
-        }
+        {selection.length > 0 && (
+          <section
+            className={cn(cardClass, "animate-[fadeInUp_180ms_ease-out]")}
+          >
+            <h2 className={sectionTitleClass}>Selected Dishes</h2>
+            <ul className="mt-2 space-y-1.5 text-sm text-brand-dusk/90 dark:text-brand-glow/90">
+              {selection.map((d) => (
+                <li key={d.id} className="flex items-baseline gap-2">
+                  <span className="inline-block h-1.5 w-1.5 rounded-full bg-gradient-to-r from-orange-500 to-rose-500" />
+                  <div>
+                    <span className="font-semibold text-brand-dusk dark:text-white">
+                      {d.name}
+                    </span>{" "}
+                    <span className="text-xs uppercase tracking-wide text-brand-dusk/60 dark:text-brand-glow/70">
+                      ({d.category})
+                    </span>
+                  </div>
+                </li>
+              ))}
+            </ul>
+            <div className="mt-4 flex flex-wrap gap-3">
+              <button
+                className="btn-primary text-xs px-4 py-2"
+                onClick={() => setOpenVideoModal(true)}
+              >
+                🍳 Cook at Home
+              </button>
+              <button
+                className="btn-ghost text-xs px-4 py-2"
+                onClick={() => {
+                  if ("geolocation" in navigator) {
+                    navigator.geolocation.getCurrentPosition(
+                      (pos) =>
+                        fetchVenues({
+                          lat: pos.coords.latitude,
+                          lng: pos.coords.longitude,
+                        }),
+                      () => fetchVenues(),
+                      { maximumAge: 1000 * 60 * 5, timeout: 10000 }
+                    );
+                  } else {
+                    fetchVenues();
+                  }
+                }}
+              >
+                📍 Eat Outside
+              </button>
+            </div>
+          </section>
+        )}
 
         {/* Recipes modal */}
         <Modal
@@ -455,7 +555,9 @@ function HomePage() {
                         {v.cuisine} • {v.price} • {v.rating.toFixed(1)}★ •{" "}
                         {v.distance_km} km
                       </div>
-                      <div className="mt-1 text-sm text-brand-dusk/80 dark:text-brand-glow/85">{v.addr}</div>
+                      <div className="mt-1 text-sm text-brand-dusk/80 dark:text-brand-glow/85">
+                        {v.addr}
+                      </div>
                       <a
                         className="mt-2 inline-block text-sm font-bold text-brand-coral hover:text-brand-dusk dark:text-brand-gold dark:hover:text-white underline-offset-2 hover:underline"
                         href={v.url}
@@ -482,8 +584,8 @@ function HomePage() {
             )}
           </section>
         )}
-      </div >
-    </div >
+      </div>
+    </div>
   );
 }
 

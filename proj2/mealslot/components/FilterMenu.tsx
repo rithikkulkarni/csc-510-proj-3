@@ -1,3 +1,21 @@
+// --- path: components/FilterMenu.tsx ---
+
+/**
+ * FilterMenu
+ * ------------------------------------------------------------
+ * Client-side filter selection component for dish spins.
+ *
+ * Responsibilities:
+ * - Displays selectable allergen (and optionally tag) filters.
+ * - Fetches available filters from `/api/filters` if not provided via props.
+ * - Initializes allergen selections based on the current user’s preferences.
+ * - Emits updates upward via `onTagChange` and `onAllergenChange` callbacks.
+ *
+ * Intended usage:
+ * - Used on the main spin page to constrain dish selection.
+ * - Can be controlled externally (via `data` prop) or self-fetching.
+ */
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -6,24 +24,36 @@ import { cn } from "./ui/cn";
 import { categoryPillBase } from "./ui/style";
 
 type FilterMenuProps = {
+  /** Optional preloaded filter data (primarily for tests or server-provided data) */
   data?: {
     tags?: string[];
     allergens?: string[];
   };
+  /** Callback fired when selected tags change */
   onTagChange?: (selected: string[]) => void;
+  /** Callback fired when selected allergens change */
   onAllergenChange?: (selected: string[]) => void;
 };
 
-export default function FilterMenu({ data, onTagChange = () => { }, onAllergenChange = () => { } }: FilterMenuProps) {
+export default function FilterMenu({
+  data,
+  onTagChange = () => {},
+  onAllergenChange = () => {},
+}: FilterMenuProps) {
   const { user } = useUser();
 
+  // Available filter options
   const [tags, setTags] = useState<string[]>(data?.tags ?? []);
   const [allergens, setAllergens] = useState<string[]>(data?.allergens ?? []);
 
+  // User-selected filters
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [selectedAllergens, setSelectedAllergens] = useState<string[]>([]);
 
-  // Fetch filters if no `data` prop was provided (tests mock global.fetch)
+  /**
+   * Fetch available filters from the API when `data` is not provided.
+   * The cleanup guard prevents state updates after unmount.
+   */
   useEffect(() => {
     if (data) return;
 
@@ -31,11 +61,9 @@ export default function FilterMenu({ data, onTagChange = () => { }, onAllergenCh
 
     (async () => {
       try {
-        console.log('FilterMenu: fetching filters from /api/filters');
         const res = await fetch("/api/filters");
         if (!res.ok) throw new Error("bad response");
         const json = await res.json();
-        console.log('FilterMenu: received filters', json);
         if (cancelled) return;
         setTags(json.tags ?? []);
         setAllergens(json.allergens ?? []);
@@ -49,7 +77,10 @@ export default function FilterMenu({ data, onTagChange = () => { }, onAllergenCh
     };
   }, [data]);
 
-  // Initialize selections based on user preferences and available options
+  /**
+   * Initialize selected allergens based on the current user's preferences,
+   * constrained to allergens that actually exist in the filter options.
+   */
   useEffect(() => {
     if (!allergens || allergens.length === 0) return;
 
@@ -59,6 +90,7 @@ export default function FilterMenu({ data, onTagChange = () => { }, onAllergenCh
     onAllergenChange(validAllergens);
   }, [user, JSON.stringify(allergens), onAllergenChange]);
 
+  // Toggle a single allergen selection
   const toggleAllergen = (allergen: string) => {
     const updated = selectedAllergens.includes(allergen)
       ? selectedAllergens.filter((a) => a !== allergen)
@@ -68,8 +100,12 @@ export default function FilterMenu({ data, onTagChange = () => { }, onAllergenCh
     onAllergenChange(updated);
   };
 
+  // Toggle a single tag selection
   const toggleTag = (tag: string) => {
-    const updated = selectedTags.includes(tag) ? selectedTags.filter((t) => t !== tag) : [...selectedTags, tag];
+    const updated = selectedTags.includes(tag)
+      ? selectedTags.filter((t) => t !== tag)
+      : [...selectedTags, tag];
+
     setSelectedTags(updated);
     onTagChange(updated);
   };

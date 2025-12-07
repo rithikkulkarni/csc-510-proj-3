@@ -3,6 +3,12 @@ import { NextRequest } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 
+/**
+ * PatchIn
+ * ---------------------------------------------------
+ * Schema for dish partial updates.
+ * All fields are optional to support PATCH semantics.
+ */
 const PatchIn = z.object({
   name: z.string().min(1).optional(),
   category: z.string().min(1).optional(),
@@ -14,6 +20,13 @@ const PatchIn = z.object({
   ytQuery: z.string().optional(),
 });
 
+/**
+ * DELETE /api/dishes/[id]
+ * ---------------------------------------------------
+ * Deletes a dish by ID.
+ * - Returns 204 on success.
+ * - Returns 404 if the dish does not exist.
+ */
 export async function DELETE(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -28,6 +41,15 @@ export async function DELETE(
   }
 }
 
+/**
+ * PATCH /api/dishes/[id]
+ * ---------------------------------------------------
+ * Applies a partial update to a dish.
+ * - Validates the body against PatchIn schema.
+ * - Only persists fields that are explicitly provided.
+ * - Returns the updated dish on success.
+ * - Returns 400 on validation error, 404 if dish not found.
+ */
 export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -46,6 +68,7 @@ export async function PATCH(
     const updated = await prisma.dish.update({
       where: { id },
       data: {
+        // Conditionally apply each field only when present
         ...(d.name !== undefined ? { name: d.name } : {}),
         ...(d.category !== undefined ? { category: d.category } : {}),
         ...(d.tags !== undefined ? { tags: d.tags.join(",") } : {}),

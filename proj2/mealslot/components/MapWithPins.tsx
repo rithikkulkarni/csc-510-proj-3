@@ -1,3 +1,27 @@
+/**
+ * MapWithPins
+ * ------------------------------------------------------------
+ * Client-side Google Maps wrapper that visualizes restaurant venues
+ * (or other locations) with pins, plus an optional "you are here" marker.
+ *
+ * Responsibilities:
+ * - Lazily loads the Google Maps JS SDK using `NEXT_PUBLIC_GOOGLE_MAPS_KEY`.
+ * - Requests the user’s approximate location once via `navigator.geolocation`.
+ * - Centers and zooms the map based on:
+ *   • user location (preferred), or
+ *   • first venue with coordinates, or
+ *   • Raleigh, NC fallback.
+ * - Renders:
+ *   • a blue circular marker for the user (if available)
+ *   • standard markers for each venue with a click-to-open InfoWindow
+ * - Fits all visible markers into view using `LatLngBounds`.
+ *
+ * Intended usage:
+ * - Used in “Eat Outside” flows to show candidate restaurants on a map.
+ * - Pass an array of venues with `id`, `name`, and optional `lat`, `lng`, `url`.
+ * - Must only be rendered on the client (relies on `window.google` + DOM).
+ */
+
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";

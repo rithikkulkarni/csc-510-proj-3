@@ -1,10 +1,21 @@
 // --- path: components/Toast.tsx ---
+/**
+ * ToastStack component
+ *
+ * Renders a fixed stack of transient toast messages in the top-right
+ * corner of the viewport. Each toast automatically expires after a
+ * configurable TTL and notifies the parent via a callback.
+ */
 "use client";
 
 import React, { useEffect } from "react";
 
 export type ToastMsg = { id: string; text: string; ttl?: number };
 
+/**
+ * Displays a list of toast messages and schedules their expiration.
+ * New items reset timers, and expired toasts are reported via onExpire.
+ */
 export default function ToastStack({
   items,
   onExpire,
@@ -14,9 +25,11 @@ export default function ToastStack({
 }) {
   useEffect(() => {
     const timers = items.map((t) =>
-      setTimeout(() => onExpire(t.id), t.ttl ?? 2600)
+      setTimeout(() => onExpire(t.id), t.ttl ?? 2600),
     );
-    return () => { for (const timer of timers) clearTimeout(timer as any); };
+    return () => {
+      for (const timer of timers) clearTimeout(timer as any);
+    };
   }, [items, onExpire]);
 
   if (items.length === 0) return null;

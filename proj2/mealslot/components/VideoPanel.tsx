@@ -1,3 +1,10 @@
+/**
+ * VideoPanel component
+ *
+ * Shows a grouped list of YouTube video suggestions by dish. Each dish
+ * section displays up to two video tiles, and clicking a tile opens an
+ * inline modal player for that specific video.
+ */
 "use client";
 
 import React, { useState } from "react";
@@ -10,6 +17,10 @@ export type Video = {
   thumbnail?: string;
 };
 
+/**
+ * Renders video suggestions keyed by dish name. Uses local state to track
+ * the currently selected video and display it in a modal iframe player.
+ */
 export default function VideoPanel({
   videosByDish,
 }: {
@@ -38,6 +49,7 @@ export default function VideoPanel({
             </span>
           </div>
 
+          {/* Show up to two suggestion tiles per dish */}
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             {vids.slice(0, 2).map((v) => (
               <button
@@ -67,7 +79,7 @@ export default function VideoPanel({
                   </div>
                 </div>
 
-                {/* Title */}
+                {/* Title and helper text */}
                 <div className="flex-1 space-y-1">
                   <p className="line-clamp-2 text-xs font-medium text-neutral-900">
                     {v.title}
