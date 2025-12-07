@@ -5,7 +5,6 @@ import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
-// ⬇️ adjust this import path to your component
 import { SlotMachine } from "../../components/SlotMachine";
 
 /* ------------------------------------------------------------------ */
@@ -36,7 +35,7 @@ const mkSpinResp = (names: string[]): SpinResponse => {
     return { spinId: `spin_${Date.now()}`, reels, selection };
 };
 
-// queue up fake /api/spin responses
+// queue up fake /api/spin responses (kept from original tests, even if SlotMachine doesn't fetch)
 const queueFetch = (...responses: SpinResponse[]) => {
     const q = [...responses];
     const mock = vi.fn().mockImplementation(async (url: string, init?: RequestInit) => {
@@ -200,13 +199,6 @@ describe("SlotMachine (happy-dom) with required props", () => {
         expect(lockA).toHaveAttribute("aria-pressed", "true");
     });
 
-    // test 6 removed (skipped previously)
-
-    // test 7 removed (skipped previously)
-
-    // test 8 removed (skipped previously)
-
-    // test 9 removed (skipped previously)
 });
 
 it("10) avoids duplicate names in visible selection when API returns dups", async () => {
@@ -263,4 +255,113 @@ it("12) locking one slot does not auto-lock others", async () => {
     expect(lockA).toHaveAttribute("aria-pressed", "true");
     expect(lockB).toHaveAttribute("aria-pressed", "false");
 });
-// end of SlotMachine tests
+
+/* ------------------------------------------------------------------ */
+/* NEW TESTS to cover remaining branches / props                       */
+/* ------------------------------------------------------------------ */
+
+it("13) shows cooldown timer and 'Ready to spin' when on cooldown", () => {
+    render(
+        <SlotMachine
+            reelCount={2}
+            onSpin={vi.fn()}
+            cooldownMs={1500}
+            hasCategory={true}
+        />
+    );
+
+    // Countdown chip
+    expect(screen.getByText(/1\.5s/)).toBeInTheDocument();
+
+    // Status message when hasCategory but cannot spin yet
+    expect(screen.getByText(/Ready to spin/i)).toBeInTheDocument();
+
+    const btn = screen.getByRole("button", { name: /spin/i });
+    // Button should be disabled & plain "SPIN" label
+    expect(btn).toBeDisabled();
+    expect(btn).toHaveTextContent("SPIN");
+});
+
+it("14) when canSpin is true, SPIN button calls onSpin with locked indices and shows sparkles label", async () => {
+    const dishA = makeDish("Pasta", "dinner");
+    const dishB = makeDish("Salad", "dinner");
+    const onSpin = vi.fn();
+
+    render(
+        <SlotMachine
+            reelCount={2}
+            onSpin={onSpin}
+            cooldownMs={0}
+            hasCategory={true}
+            selection={[dishA, dishB]}
+        />
+    );
+
+    const lockButtons = screen.getAllByRole("button", { name: /lock/i });
+    await clickWithToggle(lockButtons[0] as HTMLElement);
+
+    const spinButton = screen.getByRole("button", { name: /spin/i });
+    // Label should be the fancy "✨ SPIN!"
+    expect(spinButton).toHaveTextContent("✨ SPIN!");
+
+    await userEvent.click(spinButton);
+
+    expect(onSpin).toHaveBeenCalledTimes(1);
+    const arg = (onSpin as any).mock.calls[0][0] as { index: number; dishId: string }[];
+    expect(arg).toEqual([{ index: 0, dishId: dishA.id }]);
+});
+
+it("15) shows 'Choose a category to start' when hasCategory is false", () => {
+    render(
+        <SlotMachine
+            reelCount={2}
+            onSpin={vi.fn()}
+            cooldownMs={0}
+            hasCategory={false}
+        />
+    );
+
+    expect(
+        screen.getByText(/Choose a category to start/i)
+    ).toBeInTheDocument();
+});
+
+it("16) renders category selectors, calls onCategoryChange, and disables them when busy", async () => {
+    const onCategoryChange = vi.fn();
+
+    const view = render(
+        <SlotMachine
+            reelCount={2}
+            onSpin={vi.fn()}
+            cooldownMs={0}
+            hasCategory={true}
+            slotCategories={["Breakfast", "Snack"]}
+            onCategoryChange={onCategoryChange}
+        />
+    );
+
+    const selects = screen.getAllByRole("combobox");
+    expect(selects.length).toBe(2);
+
+    // Change first select to Lunch and ensure callback receives index + value
+    await userEvent.selectOptions(selects[0], "Lunch");
+    expect(onCategoryChange).toHaveBeenCalledWith(0, "Lunch");
+
+    // Now rerender with busy=true to hit disabled branch
+    view.rerender(
+        <SlotMachine
+            reelCount={2}
+            onSpin={vi.fn()}
+            cooldownMs={0}
+            hasCategory={true}
+            slotCategories={["Breakfast", "Snack"]}
+            onCategoryChange={onCategoryChange}
+            busy={true}
+        />
+    );
+
+    const disabledSelects = screen.getAllByRole("combobox");
+    disabledSelects.forEach((sel) => {
+        expect(sel).toBeDisabled();
+    });
+});

@@ -4,6 +4,7 @@
  *
  * Covers:
  * - Rendering of header and empty-state message when there are no messages
+ * - Summary text for 0, 1, and many messages
  * - Rendering of chat messages with:
  *   - Visual distinction for messages sent by "me" vs others
  *   - Timestamp formatting via `toLocaleTimeString`
@@ -15,15 +16,6 @@
  *   - Preventing sends for empty/whitespace-only text
  *   - Clearing the input after successful send
  * - Auto-scroll behavior when `messages` change
- *
- * Test framework:
- * - Vitest (describe/it/expect/vi)
- * - React Testing Library (render, screen, fireEvent, waitFor)
- *
- * Notes:
- * - `Date.prototype.toLocaleTimeString` is mocked for stable timestamp assertions
- * - `Object.defineProperty` is used to control `scrollHeight` for scroll tests
- * - `rerender` from RTL is used to simulate updates to the `messages` prop
  */
 
 import React from "react";
@@ -34,7 +26,7 @@ import {
   waitFor,
   cleanup,
 } from "@testing-library/react";
-import "@testing-library/jest-dom";
+import "@testing-library/jest-dom/vitest";
 import { describe, it, expect, vi, afterEach } from "vitest";
 import ChatPanel, { ChatMsg } from "../../components/ChatPanel";
 
@@ -44,16 +36,35 @@ afterEach(() => {
 });
 
 describe("ChatPanel", () => {
-  it.skip("shows empty state when there are no messages", () => {
-    // Renders header and empty-state text when messages list is empty
+  it("shows empty state when there are no messages", () => {
     render(<ChatPanel messages={[]} meId="me" onSend={vi.fn()} />);
 
     expect(screen.getByText("Party chat")).toBeInTheDocument();
-    expect(screen.getByText("No messages yet.")).toBeInTheDocument();
+    // summary text (top-right)
+    expect(screen.getByText("No messages yet")).toBeInTheDocument();
+    // empty state inside scrollable container
+    expect(
+      screen.getByText("Be the first to say hi 👋"),
+    ).toBeInTheDocument();
   });
 
-  it.skip("renders messages and highlights my messages differently", () => {
-    // Renders messages and applies different badge styles for my messages vs others
+  it("shows singular summary when there is exactly one message", () => {
+    const messages: ChatMsg[] = [
+      {
+        id: "1",
+        ts: Date.now(),
+        fromId: "me",
+        name: "Me",
+        text: "Only message",
+      },
+    ];
+
+    render(<ChatPanel messages={messages} meId="me" onSend={vi.fn()} />);
+
+    expect(screen.getByText("1 message")).toBeInTheDocument();
+  });
+
+  it("renders messages, highlights my messages differently, and shows plural summary", () => {
     const spy = vi
       .spyOn(Date.prototype, "toLocaleTimeString")
       .mockReturnValue("mock-time");
@@ -77,37 +88,52 @@ describe("ChatPanel", () => {
 
     render(<ChatPanel messages={messages} meId="me" onSend={vi.fn()} />);
 
-    // Check my message
-    const myName = screen.getByText("Me");
-    expect(myName).toBeInTheDocument();
-    expect(myName).toHaveClass("bg-sky-500", "text-black");
+    // Summary for 2 messages
+    expect(screen.getByText("2 messages")).toBeInTheDocument();
 
-    // Check other message
-    const otherName = screen.getByText("Other");
-    expect(otherName).toBeInTheDocument();
-    expect(otherName).toHaveClass("bg-neutral-200");
+    // My message bubble: gradient + white text
+    const myMessage = screen.getByText("Hello from me");
+    const myBubble = myMessage.parentElement as HTMLDivElement;
+    expect(myBubble).toHaveClass(
+      "bg-gradient-to-r",
+      "from-sky-500",
+      "to-indigo-500",
+      "text-white",
+    );
 
-    // Time label rendered via toLocaleTimeString
-    expect(screen.getAllByText("mock-time").length).toBe(2);
+    // Other message bubble: white background + dark text
+    const otherMessage = screen.getByText("Hello from other");
+    const otherBubble = otherMessage.parentElement as HTMLDivElement;
+    expect(otherBubble).toHaveClass(
+      "bg-white",
+      "text-neutral-900",
+      "border",
+      "border-neutral-200/80",
+    );
+
+    // Time labels rendered via toLocaleTimeString
+    const times = screen.getAllByText("mock-time");
+    expect(times.length).toBe(2);
 
     spy.mockRestore();
   });
 
   it("disables send button and shows tooltip when user is not joined", () => {
-    // Button is disabled and tooltip updated when meId is null
     render(<ChatPanel messages={[]} meId={null} onSend={vi.fn()} />);
 
     const sendButton = screen.getByRole("button", { name: /send/i });
     expect(sendButton).toBeDisabled();
     expect(sendButton).toHaveAttribute("title", "Join the party to chat");
+
+    const input = screen.getByPlaceholderText("Join the party to chat");
+    expect(input).toBeDisabled();
   });
 
   it("enables send button and sends trimmed text, then clears input", () => {
-    // Submitting non-empty text calls onSend with trimmed value and clears input
     const onSend = vi.fn();
     render(<ChatPanel messages={[]} meId="user-1" onSend={onSend} />);
 
-    const input = screen.getByPlaceholderText(/Message/);
+    const input = screen.getByPlaceholderText("Message…");
     const sendButton = screen.getByRole("button", { name: /send/i });
 
     // Button should be enabled for joined user
@@ -125,11 +151,10 @@ describe("ChatPanel", () => {
   });
 
   it("does not send when the text is empty or whitespace only", () => {
-    // Submitting whitespace-only text does not call onSend
     const onSend = vi.fn();
     render(<ChatPanel messages={[]} meId="user-1" onSend={onSend} />);
 
-    const input = screen.getByPlaceholderText(/Message/);
+    const input = screen.getByPlaceholderText("Message…");
     const form = input.closest("form") as HTMLFormElement;
 
     fireEvent.change(input, { target: { value: "    " } });
@@ -140,19 +165,18 @@ describe("ChatPanel", () => {
     expect(input).toHaveValue("    ");
   });
 
-  it.skip("auto-scrolls to the bottom when messages change", async () => {
-    // When messages update, the scroll container scrolls to its scrollHeight
+  it("auto-scrolls to the bottom when messages change", async () => {
     const onSend = vi.fn();
 
     const { rerender } = render(
-      <ChatPanel messages={[]} meId="me" onSend={onSend} />
+      <ChatPanel messages={[]} meId="me" onSend={onSend} />,
     );
 
-    // The scrollable div is the parent of the "No messages yet." text initially
-    const emptyState = screen.getByText("No messages yet.");
+    // The scrollable div is the parent of the empty-state text
+    const emptyState = screen.getByText("Be the first to say hi 👋");
     const scrollContainer = emptyState.parentElement as HTMLDivElement;
 
-    // Set a fake scrollHeight and ensure scrollTop starts at 0
+    // Fake scrollHeight, ensure scrollTop starts at 0
     Object.defineProperty(scrollContainer, "scrollHeight", {
       value: 999,
       configurable: true,
