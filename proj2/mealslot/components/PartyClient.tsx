@@ -1,3 +1,39 @@
+/**
+ * PartyClient
+ * ------------------------------------------------------------
+ * Top-level client controller for the Party mode experience.
+ *
+ * Responsibilities:
+ * - Manages realtime room membership and presence:
+ *   • connects to the shared realtime transport for a given party `code`
+ *   • tracks live peers (host + guests) with heartbeats and TTL pruning
+ *   • computes who is host and whether the current member is the host
+ *
+ * - Coordinates shared spin state:
+ *   • holds the current 3-slot selection (`slots`) and lock state (`locks`)
+ *   • broadcasts spin results and locks via `spin_result` events
+ *   • aggregates per-slot votes (keep / reroll) and, as host, acts on quorum
+ *   • calls the `/api/party/spin` endpoint to perform group spins and rerolls
+ *
+ * - Synchronizes per-member preferences:
+ *   • loads initial `PrefsSchema` for the current member from server state
+ *   • pushes updates to `/api/party/update` and emits `prefs` over realtime
+ *   • aggregates party-wide allergens to constrain spin requests
+ *
+ * - Handles party chat:
+ *   • listens for `chat` events and appends messages to the local log
+ *   • emits chat messages tagged with the current `code` and `memberId`
+ *
+ * Render structure:
+ * - Left column (2/3): <PartySpinMachine> for the shared slot UI and controls
+ * - Right column (1/3): <PartySidebar> (members + preferences) and <PartyChat>
+ *
+ * Notes:
+ * - This component assumes party creation/join/leave is handled at the page level.
+ *   It initializes from `initialCode` / `initialMemberId` and then manages the
+ *   ongoing realtime session and UI state for that room.
+ */
+
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -399,7 +435,7 @@ export default function PartyClient({
 
   // onLeave is handled by the page; PartyClient will disconnect via effects when `activeCode`/`memberId` change
 
-  // Initialize from page-provided props: if the page created the party it will supply `initialMemberId`
+  /** Initialize from page-provided props: if the page created the party it will supply `initialMemberId` */
   useEffect(() => {
     if (!initialCode) return;
     if (initialMemberId && skipAutoJoin) {
@@ -411,8 +447,6 @@ export default function PartyClient({
       (async () => { try { await fetchState(initialCode.toUpperCase()); } catch { } })();
     }
   }, [initialCode, initialMemberId, skipAutoJoin, fetchState, updateActiveCode]);
-
-  // Parent-level create/join handlers moved to page; no ref exposure here anymore
 
   /** prefs push */
   const [prefsStateGuard] = useState(0); // no-op, keeps deps stable
@@ -558,7 +592,7 @@ export default function PartyClient({
     }
   };
 
-  /** chat */
+  /** group spin */
   const onGroupSpin = useCallback(async () => {
     if (!activeCode || !memberId) return alert("Join a party first");
     if (!iAmHost) return alert("Only the host can spin.");
@@ -607,7 +641,7 @@ export default function PartyClient({
     try { rtRef.current?.emit("chat", { ...msg, code: activeCode, clientId: memberId }); } catch { }
   }, [activeCode, displayName, memberId]);
 
-  /** UI gates */
+  /** UI gates (currently handled at page level) */
   const canCreate = code.length === 0 && !memberId;
   const canJoin = code.length === 6 && !memberId;
 

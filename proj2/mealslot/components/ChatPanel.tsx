@@ -1,14 +1,37 @@
 // --- path: components/ChatPanel.tsx ---
+
+/**
+ * ChatPanel
+ * ------------------------------------------------------------
+ * Client-side party chat panel used in group / party flows.
+ *
+ * Responsibilities:
+ * - Renders a scrollable list of chat messages, auto-scrolling to the latest.
+ * - Distinguishes the current user's messages from others (alignment + styling).
+ * - Provides a simple input form for composing and sending new messages.
+ * - Delegates actual send behavior to the parent via `onSend`.
+ *
+ * Intended usage:
+ * - Embedded alongside party UI (spins, preferences, maps) to coordinate in real time.
+ * - Controlled by the parent via `messages`, `meId`, and `onSend` props.
+ */
+
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
 import { cn } from "./ui/cn";
 
+/** Single chat message as stored/consumed by the chat UI */
 export type ChatMsg = {
+  /** Unique message identifier (for React keys / dedupe) */
   id: string;
+  /** Timestamp (ms since epoch) used to render human-readable time */
   ts: number;
+  /** Sender's internal id; used to detect "my" messages */
   fromId: string;
+  /** Human-readable sender name shown in the bubble header */
   name: string;
+  /** Plain-text message content */
   text: string;
 };
 
@@ -17,13 +40,17 @@ export default function ChatPanel({
   meId,
   onSend,
 }: {
+  /** Full ordered message history for the current party */
   messages: ChatMsg[];
+  /** Current member id, or null if not joined (disables input) */
   meId: string | null;
+  /** Called when the user submits a new chat message */
   onSend: (text: string) => void;
 }) {
   const [text, setText] = useState("");
   const listRef = useRef<HTMLDivElement | null>(null);
 
+  // Auto-scroll to the newest message whenever `messages` changes
   useEffect(() => {
     const el = listRef.current;
     if (!el) return;

@@ -1,3 +1,10 @@
+/**
+ * UserMenu component
+ *
+ * Renders an authenticated user dropdown with navigation links
+ * (account settings, saved meals) and a sign-out action. Assumes
+ * a logged-in user and integrates with Headless UI for accessibility.
+ */
 "use client";
 
 import React, { Fragment } from "react";
@@ -10,13 +17,20 @@ type UserMenuProps = {
   onSignOut: () => void;   // required
 };
 
+/**
+ * Dropdown menu anchored to the user's name. Uses Headless UI's Menu
+ * and Transition for accessible keyboard and focus behavior.
+ */
 export default function UserMenu({ user, onSignOut }: UserMenuProps) {
   return (
     <div className="relative inline-block text-left">
       <Menu as="div" className="relative inline-block text-left">
         <Menu.Button className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-[rgba(var(--card-border),0.9)] bg-[rgb(var(--card))] px-4 py-1.5 text-sm font-semibold text-[rgb(var(--fg))] shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md hover:border-[#E5623A]">
           Hi {user.name}
-          <ChevronDownIcon className="h-4 w-4 text-[rgb(var(--muted))]" aria-hidden="true" />
+          <ChevronDownIcon
+            className="h-4 w-4 text-[rgb(var(--muted))]"
+            aria-hidden="true"
+          />
         </Menu.Button>
 
         <Transition
@@ -35,7 +49,11 @@ export default function UserMenu({ user, onSignOut }: UserMenuProps) {
                 {({ active }) => (
                   <Link
                     href="/account" // Updated to your AccountPage
-                    className={`${active ? "bg-gradient-to-r from-brand-coral/10 to-brand-gold/10 text-brand-dusk" : "text-[rgb(var(--fg))]"} block px-4 py-2.5 text-sm font-medium`}
+                    className={`${
+                      active
+                        ? "bg-gradient-to-r from-brand-coral/10 to-brand-gold/10 text-brand-dusk"
+                        : "text-[rgb(var(--fg))]"
+                    } block px-4 py-2.5 text-sm font-medium`}
                   >
                     Account Setting
                   </Link>
@@ -47,33 +65,27 @@ export default function UserMenu({ user, onSignOut }: UserMenuProps) {
                 {({ active }) => (
                   <Link
                     href="/favorites"
-                    className={`${active ? "bg-gradient-to-r from-brand-coral/10 to-brand-gold/10 text-brand-dusk" : "text-[rgb(var(--fg))]"} block px-4 py-2.5 text-sm font-medium`}
+                    className={`${
+                      active
+                        ? "bg-gradient-to-r from-brand-coral/10 to-brand-gold/10 text-brand-dusk"
+                        : "text-[rgb(var(--fg))]"
+                    } block px-4 py-2.5 text-sm font-medium`}
                   >
                     Saved Meals
                   </Link>
                 )}
               </Menu.Item>
 
-              {/* Dietary Preferences
-              <Menu.Item>
-                {({ active }) => (
-                  <Link
-                    href="/preferences"
-                    className={`block px-4 py-2 ${
-                      active ? "bg-neutral-50 text-neutral-900" : ""
-                    }`}
-                  >
-                    Dietary Preferences
-                  </Link>
-                )}
-              </Menu.Item> */}
-
               {/* Sign Out */}
               <Menu.Item>
                 {({ active }) => (
                   <button
                     onClick={onSignOut}
-                    className={`${active ? "bg-gradient-to-r from-red-50 to-amber-50" : ""} w-full text-left px-4 py-2.5 text-sm font-semibold text-red-600`}
+                    className={`${
+                      active
+                        ? "bg-gradient-to-r from-red-50 to-amber-50"
+                        : ""
+                    } w-full text-left px-4 py-2.5 text-sm font-semibold text-red-600`}
                   >
                     Sign Out
                   </button>

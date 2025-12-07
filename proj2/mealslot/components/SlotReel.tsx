@@ -1,3 +1,10 @@
+/**
+ * SlotReel component
+ *
+ * Represents a single reel within the meal slot machine.
+ * Displays the current dish, its category, a lock/unlock control,
+ * and an optional save (heart) action for persisting meals.
+ */
 "use client";
 
 import React from "react";
@@ -13,7 +20,20 @@ type Props = {
   onToggleSave?(dish: Dish): Promise<void> | void;
 };
 
-export default function SlotReel({ dish, locked, onToggle, spinning, saved, onToggleSave }: Props) {
+/**
+ * Renders an individual slot reel card with interactive controls.
+ * Visual state reflects whether the reel is locked, spinning,
+ * or associated with a saved dish.
+ */
+export default function SlotReel({
+  dish,
+  locked,
+  onToggle,
+  spinning,
+  saved,
+  onToggleSave,
+}: Props) {
+  // Shared base styles for the lock / unlock button
   const lockButtonBase =
     "rounded-full border px-3 py-1.5 text-xs md:text-sm font-medium transform transition-all duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-50 hover:-translate-y-0.5 hover:scale-[1.05] active:scale-[0.97]";
 
@@ -25,6 +45,7 @@ export default function SlotReel({ dish, locked, onToggle, spinning, saved, onTo
         spinning && "animate-slot-rotate",
       )}
     >
+      {/* Save / unsave meal button */}
       <button
         type="button"
         className={cn(
@@ -41,6 +62,8 @@ export default function SlotReel({ dish, locked, onToggle, spinning, saved, onTo
       >
         {saved ? "♥" : "♡"}
       </button>
+
+      {/* Dish name and category */}
       <div className="min-h-12 pr-10">
         <div
           className="line-clamp-2 text-base md:text-lg font-semibold tracking-tight text-[#0F1C24]"
@@ -55,6 +78,8 @@ export default function SlotReel({ dish, locked, onToggle, spinning, saved, onTo
           {dish?.category ?? ""}
         </div>
       </div>
+
+      {/* Lock / unlock control */}
       <button
         className={cn(
           lockButtonBase,

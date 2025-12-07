@@ -1,12 +1,35 @@
+/**
+ * Modal
+ * ------------------------------------------------------------
+ * Client-side accessible modal dialog component.
+ *
+ * Responsibilities:
+ * - Controls visibility via `open` prop (no internal state).
+ * - Provides basic accessibility features:
+ *   • focus trapping within the dialog
+ *   • Esc key closes the modal
+ *   • backdrop click closes the modal
+ *   • proper ARIA roles and labeling
+ * - Renders arbitrary children as modal content.
+ *
+ * Intended usage:
+ * - Display transient UI such as recipes, videos, or confirmations
+ * - Used only on the client (relies on DOM APIs and focus handling)
+ */
+
 "use client";
 
-import React from 'react';
+import React from "react";
 import { useEffect, useRef } from "react";
 
 type ModalProps = {
+  /** Whether the modal is visible */
   open: boolean;
+  /** Title announced to screen readers and shown in the header */
   title: string;
+  /** Called when the modal should close */
   onClose: () => void;
+  /** Modal body content */
   children: React.ReactNode;
 };
 
@@ -24,28 +47,34 @@ export default function Modal({ open, title, onClose, children }: ModalProps) {
 
   useEffect(() => {
     if (!open) return;
+
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
+
       if (e.key === "Tab" && dialogRef.current) {
-        // rudimentary focus trap
+        // Rudimentary focus trap
         const focusables = dialogRef.current.querySelectorAll<HTMLElement>(
           'a[href],button,textarea,input,select,[tabindex]:not([tabindex="-1"])'
         );
         const first = focusables[0];
         const last = focusables[focusables.length - 1];
         if (!first || !last) return;
+
         if (e.shiftKey && document.activeElement === first) {
-          (last as HTMLElement).focus();
+          last.focus();
           e.preventDefault();
         } else if (!e.shiftKey && document.activeElement === last) {
-          (first as HTMLElement).focus();
+          first.focus();
           e.preventDefault();
         }
       }
     };
+
     document.addEventListener("keydown", onKey);
-    // move focus inside
+
+    // Move focus inside dialog on open
     setTimeout(() => firstFocusRef.current?.focus(), 0);
+
     return () => document.removeEventListener("keydown", onKey);
   }, [open, onClose]);
 
@@ -79,7 +108,9 @@ export default function Modal({ open, title, onClose, children }: ModalProps) {
             Close
           </button>
         </div>
+
         <div className="max-h-[70vh] overflow-auto p-4">{children}</div>
+
         <div className="border-t px-4 py-3">
           <button
             ref={lastFocusRef}

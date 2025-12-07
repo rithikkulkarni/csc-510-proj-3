@@ -1,4 +1,13 @@
 // --- path: components/SpinResult.tsx ---
+/**
+ * SpinResult component
+ *
+ * Displays the result of a slot machine spin for each reel, including:
+ * - the selected dish and its metadata
+ * - lock/unlock controls per reel
+ * - group voting (keep vs. reroll) with tallies
+ * - quick links to YouTube recipe searches
+ */
 import React from "react";
 import { Lock, RefreshCcw, ThumbsUp } from "lucide-react";
 
@@ -33,6 +42,10 @@ type Props = {
   disabled?: boolean; // disable actions when not host (buttons still show tallies)
 };
 
+/**
+ * Normalizes tags/allergen fields into a displayable string array.
+ * Accepts arrays, comma-separated strings, or JSON-encoded arrays.
+ */
 function toStrings(x: any): string[] {
   if (!x) return [];
   if (Array.isArray(x)) return x.map((s) => String(s));
@@ -50,6 +63,9 @@ function toStrings(x: any): string[] {
   return [String(x)];
 }
 
+/**
+ * Small pill-style chip used for tags, allergens, and meta labels.
+ */
 function Chip({ children }: { children: React.ReactNode }) {
   return (
     <span className="rounded-full border border-neutral-200 bg-white/90 px-2.5 py-0.5 text-[11px] font-medium text-neutral-800 shadow-sm transition-all duration-150 ease-out hover:-translate-y-0.5 hover:shadow-md dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100">
@@ -58,6 +74,11 @@ function Chip({ children }: { children: React.ReactNode }) {
   );
 }
 
+/**
+ * Renders a responsive grid of spin results, one card per reel.
+ * Each card shows the chosen dish, attributes, voting controls,
+ * lock state, and an optional countdown to the next group spin.
+ */
 export default function SpinResult({
   selection,
   reels,
@@ -87,11 +108,14 @@ export default function SpinResult({
   return (
     <div className="grid gap-3 sm:grid-cols-3">
       {reels.map((label, i) => {
+        // Fallback to the first selection if a reel index is missing
         const d = selection[i] || selection[0];
         const tags = toStrings(d?.tags).map((t) => t.replace(/[_-]/g, " "));
         const allergens = toStrings(d?.allergens).map((t) =>
           t.replace(/[_-]/g, " "),
         );
+
+        // Build pills from category and tempo/health flags
         const pills: string[] = [];
         if (d?.category) pills.push(d.category);
         if (d?.mid) pills.push("mid");
