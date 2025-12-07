@@ -1,8 +1,8 @@
 // tests/app/layout.test.tsx
 import React from "react";
 import { render, screen } from "@testing-library/react";
-import { vi, expect, describe } from "vitest";
-import RootLayout, { metadata, dynamic } from "@/app/layout";
+import { vi, expect, describe, it } from "vitest";
+import RootLayout, { metadata, dynamic } from "../../app/layout";
 
 // Mock Stackframe provider + theme to avoid real Stack Auth behavior
 vi.mock("@stackframe/stack", () => ({

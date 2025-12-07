@@ -73,7 +73,6 @@ describe("PartyPage", () => {
 
     // Save and override window.location so we can spy on reload
     originalLocation = window.location;
-    // @ts-expect-error overriding for test
     delete (window as any).location;
     // @ts-expect-error
     window.location = { ...originalLocation, reload: vi.fn() };

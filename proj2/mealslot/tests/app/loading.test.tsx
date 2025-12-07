@@ -1,6 +1,7 @@
 import React from "react";
-import { render } from "@testing-library/react";
-import Loading from "@/app/loading";
+import { describe, it, expect} from "vitest";
+import { render} from "@testing-library/react";
+import Loading from "../../app/loading";
 
 describe("Loading page", () => {
   it("renders without crashing and renders nothing", () => {
