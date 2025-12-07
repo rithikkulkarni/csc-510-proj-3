@@ -1,3 +1,22 @@
+/**
+ * Allergen normalization helpers
+ *
+ * Utilities for cleaning and standardizing allergen strings coming from
+ * various sources (arrays, JSON-encoded strings, comma-delimited values).
+ * Ensures downstream code can rely on a consistent, lowercased format.
+ */
+
+/**
+ * normalizeAllergens
+ *
+ * Normalizes a flexible allergen input into a deduplicated string array.
+ * Supports:
+ * - null/undefined (returns [])
+ * - arrays of strings
+ * - comma-separated strings
+ * - JSON-encoded arrays (e.g. '["dairy","gluten"]')
+ * Also applies simple alias mappings (e.g. "tree-nut" → "nuts").
+ */
 export function normalizeAllergens(input: string | string[] | null | undefined): string[] {
     if (!input) return [];
     const out: string[] = [];
