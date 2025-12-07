@@ -27,20 +27,20 @@ const mockSetUser = mockSetUserHoisted;
 // ----------------------
 // Module mocks
 // ----------------------
-vi.mock("../../app/context/UserContext", () => ({
+vi.mock("../../../app/context/UserContext", () => ({
   useUser: () => ({
     user: currentUser,
     setUser: mockSetUser,
   }),
 }));
 
-vi.mock("../../app/actions", () => ({
+vi.mock("../../../app/actions", () => ({
   getAllAllergens: getAllAllergensMock,
   updateUserDetails: updateUserDetailsMock,
 }));
 
 // Import component AFTER mocks
-import DietaryPreferencesSection from "../../app/account/DietaryPreferencesSection";
+import DietaryPreferencesSection from "../../../app/account/DietaryPreferencesSection";
 
 describe("DietaryPreferencesSection", () => {
   beforeEach(() => {

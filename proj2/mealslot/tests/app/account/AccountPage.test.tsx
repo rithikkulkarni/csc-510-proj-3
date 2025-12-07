@@ -24,7 +24,6 @@ vi.mock("@/app/actions", () => ({
 const accountSettingsStore = { lastProps: null as any };
 
 vi.mock("@stackframe/stack", () => {
-  const React = require("react");
   return {
     AccountSettings: (props: any) => {
       accountSettingsStore.lastProps = props;
@@ -44,6 +43,7 @@ vi.mock("@stackframe/stack", () => {
   };
 });
 
+
 // Mock DietaryPreferencesSection so we don't pull its real implementation
 vi.mock("@/app/account/DietaryPreferencesSection", () => ({
   __esModule: true,
@@ -53,8 +53,8 @@ vi.mock("@/app/account/DietaryPreferencesSection", () => ({
 // ----------------------
 // Import AFTER mocks
 // ----------------------
-import { client } from "../../stack/client";
-import AccountPage from "../../app/account/page";
+import { client } from "../../../stack/client";
+import AccountPage from "../../../app/account/page";
 
 const getUserMock = client.getUser as any;
 

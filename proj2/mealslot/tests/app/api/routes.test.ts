@@ -27,21 +27,16 @@ vi.mock('@/lib/db', () => {
 });
 
 // Import route handlers
-import * as PartyCreate from '../../app/api/party/create/route';
-import * as Dishes from '../../app/api/dishes/route';
-import * as DishesId from '../../app/api/dishes/[id]/route';
-import * as Filters from '../../app/api/filters/route';
-import * as Places from '../../app/api/places/route';
-import * as Recipe from '../../app/api/recipe/route';
-import * as Spin from '../../app/api/spin/route';
-import * as UserUpdate from '../../app/api/user/update/route';
-import * as UserSaved from '../../app/api/user/saved/route';
-import * as Videos from '../../app/api/videos/route';
-// import * as PartyJoin from '@/app/api/party/join/route';
-// import * as PartyLeave from '@/app/api/party/leave/route';
-// import * as PartyState from '@/app/api/party/state/route';
-// import * as PartyUpdate from '@/app/api/party/update/route';
-// import * as PartySpin from '@/app/api/party/spin/route';
+import * as PartyCreate from '../../../app/api/party/create/route';
+import * as Dishes from '../../../app/api/dishes/route';
+import * as DishesId from '../../../app/api/dishes/[id]/route';
+import * as Filters from '../../../app/api/filters/route';
+import * as Places from '../../../app/api/places/route';
+import * as Recipe from '../../../app/api/recipe/route';
+import * as Spin from '../../../app/api/spin/route';
+import * as UserUpdate from '../../../app/api/user/update/route';
+import * as UserSaved from '../../../app/api/user/saved/route';
+import * as Videos from '../../../app/api/videos/route';
 
 describe('API route smoke tests', () => {
     beforeEach(() => {

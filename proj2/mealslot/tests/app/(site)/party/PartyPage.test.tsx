@@ -39,7 +39,7 @@ vi.mock("@/components/PartyClient", () => ({
 }));
 
 // Import the page AFTER mocks
-import PartyPage from "../../app/(site)/party/page";
+import PartyPage from "../../../../app/(site)/party/page";
 
 // ----------------------
 // Helpers

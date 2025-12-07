@@ -16,7 +16,7 @@ vi.mock("@/stack/client", () => ({
 }));
 
 // actions used in the page
-vi.mock("../../app/actions", () => ({
+vi.mock("../../../app/actions", () => ({
   getUserDetails: vi.fn(),
   getAllAllergens: vi.fn(),
   updateUserDetails: vi.fn(),
@@ -73,9 +73,9 @@ vi.mock("@/components/ui/Modal", () => ({
 // ----------------------
 // Import the page AFTER mocks
 // ----------------------
-import SiteHomePage from "../../app/(site)/page";
-import { client } from "../../stack/client";
-import { getUserDetails, updateUserDetails } from "../../app/actions";
+import SiteHomePage from "../../../app/(site)/page";
+import { client } from "../../../stack/client";
+import { getUserDetails, updateUserDetails } from "../../../app/actions";
 
 // ----------------------
 // Helpers to stub /api/spin, /api/videos, /api/places
