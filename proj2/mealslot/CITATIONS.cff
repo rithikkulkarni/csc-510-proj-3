@@ -3,12 +3,17 @@ message: "If you use this software in a publication, please cite it using the me
 title: "mealslot"
 version: "0.1.0"
 doi: ""
-date-released: "2025-11-06"
+date-released: "2025-12-08"
 authors:
   - given-names: "Chris"
     family-names: "Lee"
     affiliation: ""
     email: ""
+    orcid: ""
+  - given-names: "Rithik"
+    family-names: "Kulkarni"
+    affiliation: "North Carolina State University"
+    email: "rithik.r.kulkarni@gmail.com"
     orcid: ""
 preferred-citation:
   type: "software"
