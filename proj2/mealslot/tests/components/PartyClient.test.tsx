@@ -227,7 +227,7 @@ describe("PartyClient", () => {
     });
   });
 
-    it("wires basic child components and passes props down", async () => {
+  it("wires basic child components and passes props down", async () => {
     render(
       <PartyClient
         code="room01"
@@ -260,7 +260,7 @@ describe("PartyClient", () => {
 
   it("calls onGroupSpin from PartySpinMachine and shows alert if not host", async () => {
     // Mock window.alert since the component will alert when non-host tries to spin
-    const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
+    const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => { });
 
     render(
       <PartyClient

@@ -516,7 +516,7 @@ describe("SiteHomePage", () => {
 
   it("handles spin error and shows alert", async () => {
     mockSpinError();
-    const alertSpy = vi.spyOn(window, "alert").mockImplementation(() => {});
+    const alertSpy = vi.spyOn(window, "alert").mockImplementation(() => { });
 
     render(<SiteHomePage />);
 

@@ -19,13 +19,13 @@ import { getUserDetails } from "../actions";
  */
 type UserProfile =
   | {
-      id: string;
-      auth_id?: string | null;
-      name: string;
-      allergens?: string[];
-      savedMeals?: string[];
-      allAllergens?: string[];
-    }
+    id: string;
+    auth_id?: string | null;
+    name: string;
+    allergens?: string[];
+    savedMeals?: string[];
+    allAllergens?: string[];
+  }
   | null;
 
 /**
@@ -66,7 +66,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
     try {
       const neonUser = await client.getUser();
       console.log("refreshUser: neonUser.id =", neonUser?.id);
-      
+
       if (!neonUser) {
         console.log("refreshUser: no authenticated user, clearing profile");
         setUser(null);
@@ -75,7 +75,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
       const profile = await getUserDetails(neonUser.id);
       console.log("refreshUser: profile.savedMeals =", profile?.savedMeals);
-      
+
       if (profile) {
         setUser({
           id: neonUser.id,
@@ -123,8 +123,8 @@ export function useUser() {
     if (process.env.NODE_ENV === "test") {
       return {
         user: null,
-        setUser: () => {},
-        refreshUser: async () => {},
+        setUser: () => { },
+        refreshUser: async () => { },
       } as UserContextType;
     }
 

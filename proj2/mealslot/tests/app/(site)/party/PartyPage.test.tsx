@@ -174,7 +174,7 @@ describe("PartyPage", () => {
     } as any);
 
     const createButton = screen.getByRole("button", { name: "Create" });
-    const alertSpy = vi.spyOn(window, "alert").mockImplementation(() => {});
+    const alertSpy = vi.spyOn(window, "alert").mockImplementation(() => { });
 
     fireEvent.click(createButton);
 
@@ -231,7 +231,7 @@ describe("PartyPage", () => {
       json: async () => ({ error: "Join issue" }),
     } as any);
 
-    const alertSpy = vi.spyOn(window, "alert").mockImplementation(() => {});
+    const alertSpy = vi.spyOn(window, "alert").mockImplementation(() => { });
 
     const joinButton = screen.getByRole("button", { name: "Join" });
     fireEvent.click(joinButton);
@@ -252,7 +252,7 @@ describe("PartyPage", () => {
     fireEvent.change(nameInput, { target: { value: "Eve" } });
 
     // Create party -> isCreator = true
-    ;(global as any).fetch.mockResolvedValueOnce({
+    ; (global as any).fetch.mockResolvedValueOnce({
       ok: true,
       json: async () => ({
         code: "LEAVE1",
@@ -284,7 +284,7 @@ describe("PartyPage", () => {
     ) as HTMLInputElement;
     fireEvent.change(nameInput, { target: { value: "Frank" } });
 
-    ;(global as any).fetch.mockResolvedValueOnce({
+    ; (global as any).fetch.mockResolvedValueOnce({
       ok: true,
       json: async () => ({
         code: "COPY12",
@@ -321,7 +321,7 @@ describe("PartyPage", () => {
     fireEvent.change(codeInput, { target: { value: "PARTY1" } });
 
     // 1st fetch: /api/party/join
-    ;(global as any).fetch.mockResolvedValueOnce({
+    ; (global as any).fetch.mockResolvedValueOnce({
       ok: true,
       json: async () => ({
         memberId: "party-member",
@@ -350,7 +350,7 @@ describe("PartyPage", () => {
     });
 
     // 2nd fetch: /api/places
-    ;(global as any).fetch.mockResolvedValueOnce({
+    ; (global as any).fetch.mockResolvedValueOnce({
       ok: true,
       json: async () => ({
         venues: [
@@ -395,7 +395,7 @@ describe("PartyPage", () => {
     fireEvent.change(nameInput, { target: { value: "Hank" } });
     fireEvent.change(codeInput, { target: { value: "PARTY2" } });
 
-    ;(global as any).fetch.mockResolvedValueOnce({
+    ; (global as any).fetch.mockResolvedValueOnce({
       ok: true,
       json: async () => ({
         memberId: "member-geo-error",
@@ -420,7 +420,7 @@ describe("PartyPage", () => {
       },
     });
 
-    ;(global as any).fetch.mockResolvedValueOnce({
+    ; (global as any).fetch.mockResolvedValueOnce({
       ok: true,
       json: async () => ({
         results: {
@@ -466,7 +466,7 @@ describe("PartyPage", () => {
     fireEvent.change(nameInput, { target: { value: "Ivy" } });
     fireEvent.change(codeInput, { target: { value: "PARTY3" } });
 
-    ;(global as any).fetch.mockResolvedValueOnce({
+    ; (global as any).fetch.mockResolvedValueOnce({
       ok: true,
       json: async () => ({
         memberId: "member-no-geo",
@@ -489,7 +489,7 @@ describe("PartyPage", () => {
       value: navCopy,
     });
 
-    ;(global as any).fetch.mockResolvedValueOnce({
+    ; (global as any).fetch.mockResolvedValueOnce({
       ok: true,
       json: async () => [
         {
