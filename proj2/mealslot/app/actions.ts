@@ -43,7 +43,9 @@ export async function getAllAllergens(): Promise<string[]> {
     }
   });
 
-  return Array.from(new Set(merged)).filter(Boolean);
+  return Array.from(new Set(merged))
+    .filter(Boolean)
+    .filter(item => !item.includes("object")); // Filter out corrupted "[object Object]" entries
 }
 
 // -------------------------
