@@ -94,11 +94,10 @@ export default function DietaryPreferencesSection() {
               key={allergen}
               type="button"
               onClick={() => togglePreference(allergen)}
-              className={`px-3 py-1 rounded border ${
-                active
+              className={`px-3 py-1 rounded border ${active
                   ? "bg-blue-600 text-white border-blue-600"
                   : "bg-white dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 border-neutral-300 dark:border-neutral-700"
-              }`}
+                }`}
             >
               {allergen} {active && "✓"}
             </button>

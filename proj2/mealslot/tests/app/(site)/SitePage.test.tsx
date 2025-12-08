@@ -516,7 +516,7 @@ describe("SiteHomePage", () => {
 
   it("handles spin error and shows alert", async () => {
     mockSpinError();
-    const alertSpy = vi.spyOn(window, "alert").mockImplementation(() => {});
+    const alertSpy = vi.spyOn(window, "alert").mockImplementation(() => { });
 
     render(<SiteHomePage />);
 
@@ -598,6 +598,12 @@ describe("SiteHomePage", () => {
       savedMeals: [],
     };
     localStorage.setItem("userProfile", JSON.stringify(profile));
+
+    // Mock client.getUser() to return auth_id
+    (client.getUser as any).mockResolvedValue({
+      id: "auth-1",
+      displayName: "Auth User",
+    });
 
     // updateUserDetails resolves with new savedMeals
     (updateUserDetails as any).mockResolvedValueOnce({

@@ -269,14 +269,13 @@ export default function PartyPage() {
                 initialNickname={nickname}
                 skipAutoJoin={isCreator}
                 initialMemberId={creatorMemberId}
-                onSpin={() => setSpinOccurred(true)}
               />
             </div>
           )}
         </section>
 
-        {/* Eat Outside Section - only show after a spin */}
-        {spinOccurred && (
+        {/* Eat Outside Section */}
+        {activeCode && (
           <section id="outside" className={cardClass}>
             <h2 className={sectionTitleClass}>Eat Outside</h2>
             <p className={sectionSubtitleClass}>
