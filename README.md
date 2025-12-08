@@ -30,7 +30,7 @@ but nevertheless, here is a track record that everyone is contributing a lot)|ev
 |Test cases exist|dozens of tests and those test cases are more than 30% of the code base|3|
 |Test cases are routinely executed|E.g. travis-com.com or github actions or something|3|
 |Issues are discussed before they are closed|even if you discuss in slack, need a sumamry statement here|3|
-|Chat channel: exists|[Link or screenshots](https://docs.google.com/document/d/1WnOxm2S8KvFxzPO2PmwB52IYe9X6Ly_bjM0Q-vFLYFs/edit?usp=sharing)|3|
+|Chat channel: exists|[Link or screenshots](https://docs.google.com/document/d/1A-Fz2_Rlq_VkqLixtLzNbw1e78-GV-K-3JCpCpqh3bw/edit?usp=sharing)|3|
 |Test cases: a large proportion of the issues related to handling failing cases.|If a test case fails, open an issue and fix it|3|
 |Evidence that the whole team is using the same tools: everyone can get to all tools and files| |3|
 |Evidence that the whole team is using the same tools (e.g. config files in the repo, updated by lots of different people)| |3|
