@@ -1,6 +1,6 @@
 # PROJECT 3 README: GROUP 10 EXTENDING MEALSLOT
-
 [![Coverage Status](https://coveralls.io/repos/github/rithikkulkarni/csc-510-proj-3/badge.svg?branch=main)](https://coveralls.io/github/rithikkulkarni/csc-510-proj-3?branch=main)
+[![Lint](https://github.com/rithikkulkarni/csc-510-proj-3/actions/workflows/lint.yml/badge.svg?branch=main)](https://github.com/rithikkulkarni/csc-510-proj-3/actions/workflows/lint.yml)
 [![GitHub issues](https://img.shields.io/github/issues/rithikkulkarni/csc-510-proj-3)](https://github.com/rithikkulkarni/csc-510-proj-3/issues)
 [![Open Pull Requests](https://img.shields.io/github/issues-pr/rithikkulkarni/csc-510-proj-3)](https://github.com/rithikkulkarni/csc-510-proj-3/pulls)
 [![Contributors](https://img.shields.io/github/contributors/rithikkulkarni/csc-510-proj-3)](https://github.com/rithikkulkarni/csc-510-proj-3/graphs/contributors)
@@ -12,182 +12,446 @@
 ![Release](https://img.shields.io/github/v/release/rithikkulkarni/csc-510-proj-3)
 [![DOI](https://zenodo.org/badge/1097253739.svg)](https://doi.org/10.5281/zenodo.17795085)
 
+Rubric Self-Evaluation:
+|Notes|Evidence|Score|
+|-----|---------|--|
+|Workload is spread over the whole team (one team member is often Xtimes more productive than the others... --| |3|
+but nevertheless, here is a track record that everyone is contributing a lot)|evidence in GH|3|
+|Number of commits|in GH|3|
+|Number of commits: by different people|in GH|3|
+|Issues reports: there are **many**| |3|
+|Issues are being closed|evidence in GH|3|
+|Docs: doco generated, format not ugly |in GH|3|
+|Docs: what: point descriptions of each class/function (in isolation)| |3|
+|Docs: how: for common use cases X,Y,Z mini-tutorials showing worked examples on how to do X,Y,Z|wiki pages for this in GH: https://github.com/rithikkulkarni/csc-510-proj-2/wiki|3|
+|Docs: why: docs tell a story, motivate the whole thing, deliver a punchline that makes you want to rush out and use the thing| |3|
+|Docs: short video, animated, hosted on your repo. That convinces people why they want to work on your code.| |3|
+|Use of version control tools| |3|
+|Test cases exist|dozens of tests and those test cases are more than 30% of the code base|3|
+|Test cases are routinely executed|E.g. travis-com.com or github actions or something|3|
+|Issues are discussed before they are closed|even if you discuss in slack, need a sumamry statement here|3|
+|Chat channel: exists|[Link or screenshots](https://docs.google.com/document/d/1A-Fz2_Rlq_VkqLixtLzNbw1e78-GV-K-3JCpCpqh3bw/edit?usp=sharing)|3|
+|Test cases: a large proportion of the issues related to handling failing cases.|If a test case fails, open an issue and fix it|3|
+|Evidence that the whole team is using the same tools: everyone can get to all tools and files| |3|
+|Evidence that the whole team is using the same tools (e.g. config files in the repo, updated by lots of different people)| |3|
+|Evidence that the whole team is using the same tools (e.g. tutor can ask anyone to share screen, they demonstrate the system running on their computer)| |3|
+|Evidence that the members of the team are working across multiple places in the code base| |3|
+|Short release cycles | (hard to see in short projects) project members are committing often enough so that everyone can get your work|3|
+|The file .gitignore lists what files should not be saved to the repo. See [examples](https://github.com/github/gitignore)|in GH|3|
+|The file INSTALL.md lists how to install the code|in GH|3|
+|The file LICENSE.md lists rules of usage for this repo|in GH|3|
+|The file CODE-OF-CONDUCT.md lists rules of behavior for this repo; e.g. see [example](https://github.com/probot/template/blob/master/CODE_OF_CONDUCT.md)|in GH|3|
+|The file CONTRIBUTING.md lists coding standards and lots of tips on how to extend the system without screwing things up; e.g. see [example](https://github.com/probot/template/blob/master/CONTRIBUTING.md)|in GH|3|
+|The file README.md contains all the following|in GH|3|
+|Video|2min video of new functionality, showing a significant delta from prior.| |3|
+|DOI badge: exists. To get a Digitial Object Indentifier, regiser the project at [Zenodo](https://docs.github.com/en/repositories/archiving-a-github-repository/referencing-and-citing-content). DOI badges look like this: ![Zenodo doi badge](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.1234567-blue.svg) |in GH|3|
+|Badges showing your style checkers |config files in GH, Lint workflow + badge in README (Prettier with Lint)|3|
+|Badges showing your code formatters. |config files in GH, Lint workflow + badge in README|3|
+|Badges showing your syntax checkers. |config files in GH|3|
+|Badges showing your code coverage tools|config files in GH, coveralls badge in README|3|
+|Badges showing any other Other automated analysis tools| |3|
+| ||
 
-# MealSlot — MVP Scaffolding
 
-Production-ready scaffolding with strict TypeScript, Next.js 15 App Router, Tailwind CSS, Prisma (SQLite by default), deterministic stubs (LLM + YouTube + Places), Socket.IO websockets, Zod validation, rate limiting, and tests.
+# MealSlot
 
-## Purpose
+*Decisions are hard. Meal planning shouldn't be.*
 
-MealSlot helps people decide what to eat using a slot-machine UI. Categories become reels. Users can lock/reroll, apply power-ups (Healthy, Cheap, ≤30m), then choose:
+<!-- Optional logo if you have one -->
+<!-- <img src="./public/mealslot-logo.png" alt="MealSlot Logo" width="70" height="70"> -->
 
-- **Cook at Home** → LLM recipe JSON + matching YouTube video (stubbed deterministically).
-- **Eat Outside** → venue suggestions (stubbed deterministically).
-- **Party Mode** → merges constraints across participants and broadcasts spins via websockets.
+[📺 **WATCH THE DEMO VIDEO!**](./MealSlot_Demo.mp4)
 
-## Who is MealSlot For?
+## Group Members (G10)
 
-Mealslot is meant to help anyone looking to expand their culinary horizons. Whether they are an adventurous eater looking for new experiences, a beginner trying to expand their pallate, or a home cook working on their skills, MealSlot can help them discover and explore new dishes.
+- Rithik Kulkarni (rrkulka3)
+- Shiva Gadireddy (sgadire)
+- Ananya Rao (arrao3)
+- Natasha Wolsborn (njwolsbo)
 
-## Demo
+Project 3 repository for **CSC 510 - Fall 2025**
 
-https://github.com/user-attachments/assets/79e14304-0232-4f44-b30f-979cc4b544a5
+---
 
+## 1. Project Overview
 
-## Tech Stack
+MealSlot helps users discover new culinary experiences by **gamifying the process of choosing a meal**.
 
-- **Framework:** Next.js 15 (App Router), React, TypeScript (strict)
-- **Styling:** Tailwind CSS
-- **Data:** Prisma ORM, SQLite (default) / Postgres (optional via Docker)
-- **Validation:** Zod
-- **API:** Next.js Route Handlers
-- **Websockets:** Socket.IO (separate dev server)
-- **Tooling:** pnpm, ESLint, Prettier, Vitest, Playwright
+Core capabilities:
 
-### Third-Party APIs
+- 🎰 **Randomized Meal Choices** – Slot machine UI lets users pick meal categories and constraints, then generates randomized meals with recipes and nearby venues.
+- 🍳 **Cook at Home (Recipes)** – Fetches multiple recipe ideas for each dish with **YouTube video** links.
+- 📍 **Eat Out (Nearby Restaurants)** – Uses the **Google Places API** to find restaurants that serve meals similar to the selected dishes.
+- 🎉 **Party Spins** – Users can create parties to coordinate meal planning as a group.
+- 📅 **Complex Spins / Full-Day Plans** – Spin across multiple categories (e.g., breakfast, lunch, dinner, dessert) to build randomized full-day meal plans.
+- 👤 **User System** – Authenticated users can sign up/login, view history, change profile image and username, and store dietary preferences for all future spins.
+- ❤️ **Saved Meals** – Users can “heart” meals and revisit them via their account page.
+- ✨ **UI Enhancements** – Custom color scheme, animations, and polished layout, optimized for both solo and party flows.
 
-MealSlot requires the following API keys for full functionality:
-- **Google Maps JavaScript API** — venue suggestions for “Eat Outside”  
-- **YouTube Data API v3** — recipe and cooking videos
-Remember to populate the keys in .env.local before running the app.
+---
 
-## Repository Layout
+## 2. Developer Handbook
 
-```text
-mealslot/
-├─ app/
-│  ├─ (site)/{layout.tsx,page.tsx,party/page.tsx}
-│  ├─ api/
-│  │  ├─ spin/route.ts
-│  │  ├─ recipe/route.ts
-│  │  ├─ places/route.ts
-│  │  └─ party/{create,join,spin,state,leave}/route.ts
-│  └─ layout.tsx
-├─ components/{SlotReel.tsx,SlotMachine.tsx,PowerUps.tsx,PartyClient.tsx,ui/*}
-├─ lib/{schemas.ts,dishes.ts,scoring.ts,rng.ts,rateLimit.ts,youtube.ts,auth.ts,party.ts}
-├─ prisma/{schema.prisma,seed.ts}
-├─ public/{favicon.ico,recipe.schema.json}
-├─ ws-server/src/index.ts
-├─ tests/unit/{mergeConstraints.test.ts,spinLogic.test.ts,recipeSchema.test.ts}
-├─ tests/e2e/smoke.spec.ts
-├─ scripts/devdata.ts
-├─ .env.example
-├─ docker-compose.yml
-├─ package.json  tsconfig.json  next.config.js  postcss.config.js  tailwind.config.ts
-├─ playwright.config.ts  vitest.config.ts
-├─ .eslintrc.cjs  .prettierrc  .gitignore
-└─ README.md
-```
+> This section covers linting, formatting, testing, coverage, and database usage with **ESLint**, **Prettier**, **Vitest**, **Prisma**, and **Neon Postgres**.
 
-## Quick Start (GitHub Codespaces)
+---
 
-Create a Codespace: GitHub → Code → Codespaces → Create on `main`
+### 2.1 Prerequisites (Quick Start)
 
-Then run:
-```
-cd proj2/mealslot
-corepack enable
-corepack prepare pnpm@latest --activate
+```bash
+git clone https://github.com/rithikkulkarni/csc-510-proj-3.git
+cd proj2/mealslot # This proj2 root is from the forked repository - it still resembles the original creators' structure.
 pnpm install
-pnpm prisma db push
-pnpm prisma db seed
-cp -n .env.example .env.local   # stubs work without keys
-pnpm dev                        # Next.js on port 3000 (auto-forwarded)
+
+# Set up your .env.local (see below), then:
+pnpm run dev
 ```
-Optional: WebSocket dev server
+
+By default, the app runs at `http://localhost:3000`.
+
+---
+
+### 2.2 Code Quality: ESLint
+
+This project uses:
+
+- **ESLint** – static analysis and style rules
+- **TypeScript** – type safety
+
+#### Install / verify dependencies
+
+```bash
+pnpm i -D eslint prettier eslint-config-next eslint-config-prettier eslint-plugin-prettier @typescript-eslint/eslint-plugin @typescript-eslint/parser
 ```
-cd ws-server
-pnpm install
-pnpm dev                        # typically port 4001 (auto-forwarded)
+
+#### Lint commands
+
+```bash
+# Run lint
+npm run lint
+
+# Auto-fix fixable issues
+npm run lint:fix
 ```
-Scripts
+
+Suggested `package.json` scripts:
+
+```json
+{
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint . --ext .ts,.tsx",
+    "lint:fix": "eslint . --ext .ts,.tsx --fix",
+    "format": "prettier . --write",
+    "format:check": "prettier . --check"
+  }
+}
 ```
-pnpm lint
-pnpm typecheck
-pnpm test
-pnpm test:e2e    # requires Playwright
+
+---
+
+### 2.3 Testing (Vitest & React Testing Library)
+
+We use **Vitest** for tests and **React Testing Library** for React components.
+
+#### Test dependencies
+
+```bash
+npm i -D vitest jsdom @testing-library/react @testing-library/jest-dom @testing-library/user-event
 ```
-## Environment
 
-Basic flows work with no secrets (deterministic stubs auto-activate).
+#### `vitest.config.ts`
 
-Copy `.env.example` to `.env.local`. Populate keys as needed later.
+```ts
+import { defineConfig } from 'vitest/config';
+import path from 'path';
 
-## Database
-
-Default: SQLite (zero-config)
-
-Postgres (optional): via `docker-compose.yml`
+export default defineConfig({
+  test: {
+    globals: true,
+    setupFiles: ['./vitest.setup.ts'],
+    environment: 'jsdom',
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'lcov', 'html'],
+      all: true,
+      include: ['src/**/*.{ts,tsx,js,jsx}'],
+      exclude: [
+        'node_modules/',
+        '.next/',
+        'out/',
+        'coverage/',
+        '**/*.d.ts',
+        '**/vitest.setup.ts',
+        '**/vitest.config.ts'
+      ]
+    }
+  },
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src')
+    }
+  }
+});
 ```
-docker compose up -d
-# update Prisma datasource in prisma/schema.prisma if switching to Postgres
-pnpm prisma db push
-pnpm prisma db seed
+
+#### `vitest.setup.ts`
+
+```ts
+import '@testing-library/jest-dom';
+import fetch from 'node-fetch';
+import { vi } from 'vitest';
+
+// Only needed if Node < 18
+if (!globalThis.fetch) {
+  // @ts-ignore
+  globalThis.fetch = fetch;
+}
+
+// Example: mock next/font/google if you use it
+vi.mock('next/font/google', () => ({
+  Geist: () => ({ variable: 'font-geist-sans' }),
+  Geist_Mono: () => ({ variable: 'font-geist-mono' })
+}));
 ```
-## Validation & Rate Limiting
 
-All API input/output is Zod-validated (`lib/schemas.ts`).
+#### Example test
 
-Basic rate limiting in `lib/rateLimit.ts`.
+```tsx
+import { render, screen } from '@testing-library/react';
+import HomePage from '@/app/(solo)/page';
 
-## Deterministic Stubs
-
-When env keys are missing, endpoints return deterministic data for repeatable tests and demos:
-
-LLM recipe: `app/api/recipe/route.ts` uses `lib/schemas.ts` + `public/recipe.schema.json`.
-
-YouTube lookup: deterministic helper in `lib/youtube.ts`.
-
-Places: deterministic venue list in `app/api/places/route.ts`.
-
-## Party Mode
-
-Websocket server scaffold: `ws-server/src/index.ts` (Socket.IO).
-
-API routes under `app/api/party/*`:
-
-`create`, `join`, `spin`, `state`, `leave`
-
-Phase 2 will wire spin broadcasts + constraint merge with tests.
-
-## Tests
-
-Unit: `tests/unit/*` (Vitest)
-
-`mergeConstraints.test.ts`
-
-`spinLogic.test.ts`
-
-`recipeSchema.test.ts`
-
-E2E: `tests/e2e/smoke.spec.ts` (Playwright)
-
-Run:
+test('renders MealSlot heading', () => {
+  render(<HomePage />);
+  expect(
+    screen.getByRole('heading', { name: /what should we eat today/i })
+  ).toBeInTheDocument();
+});
 ```
-pnpm test
-pnpm test:e2e
+
+#### Test scripts
+
+```json
+{
+  "scripts": {
+    "test": "vitest",
+    "test:watch": "vitest watch",
+    "test:coverage": "vitest run --coverage"
+  }
+}
 ```
-## Notes
 
-Next.js App Router with strict TypeScript.
+Run tests with coverage:
 
-Tailwind configured in `tailwind.config.ts`.
+```bash
+pnpm run test:coverage
+```
 
-Seed data in `prisma/seed.ts`; extra dev data via `scripts/devdata.ts`.
+---
 
-API routes live under `app/api/**` and are fully typed.
+#### Coveralls Integration
 
-## Roadmap
+Create a **Coveralls** project for this repo.
 
-- Enhance UI with animations
-- Allow for more complex meal plans spanning multiple categories
-- Add a login system so users can save meal plans
-- Create a system for users to share dishes and plans with others
+**`.github/workflows/coverage.yml`**
 
-## Support
+```yaml
+name: coverage
 
-For issues, questions, or feature requests, please open a GitHub issue.
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
 
-## License
+jobs:
+  test:
+    runs-on: ubuntu-latest
 
-This project is licensed under the MIT License. See the [LICENSE](./LICENSE) file for details.
+    defaults:
+      run:
+        working-directory: proj2/mealslot
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+          run_install: false
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Run Vitest with coverage
+        run: pnpm test:coverage
+
+      - name: Upload coverage to Coveralls
+        uses: coverallsapp/github-action@v2
+        with:
+          files: proj2/mealslot/coverage/lcov.info
+          fail_ci_if_error: true
+```
+
+#### CI: ESLint
+
+**`.github/workflows/lint.yml`**
+
+```yaml
+name: lint
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  eslint:
+    name: Run ESLint
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: proj2/mealslot
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'   # match coverage.yml (or your actual Node version)
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+          run_install: false
+
+      - name: Install deps
+        run: pnpm install
+
+      - name: Run ESLint
+        run: pnpm lint         # or `pnpm run lint` depending on your script name
+```
+
+---
+
+## 3. Database: Prisma + Neon (Postgres)
+
+MealSlot uses **Prisma** as the ORM and **Neon** as the managed Postgres database.
+
+Typical setup:
+
+1. Create a Neon Postgres project and database.
+2. Copy the connection string into `.env.local`:
+
+```bash
+DATABASE_URL="postgresql://<user>:<password>@<neon-host>/<db>?sslmode=require"
+```
+
+3. Define your models in `prisma/schema.prisma` (e.g., users, dishes, sessions/parties, spins, savedMeals, allergens).
+4. Run migrations:
+
+```bash
+npx prisma migrate dev --name init
+npx prisma generate
+```
+
+5. (Optional) Seed data:
+
+```bash
+npx prisma db seed
+```
+
+Example Prisma client helper:
+
+```ts
+// src/lib/db.ts
+import { PrismaClient } from '@prisma/client';
+
+const globalForPrisma = global as unknown as { prisma: PrismaClient };
+
+export const prisma =
+  globalForPrisma.prisma ||
+  new PrismaClient({
+    log: ['query', 'info', 'warn', 'error']
+  });
+
+if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
+```
+
+---
+
+## 4. Auth & Environment Variables
+
+MealSlot supports login with **Google**, **GitHub**, and email/password. Common environment variables (adjust names to match your actual implementation):
+
+```bash
+# Database
+DATABASE_URL=postgresql://...
+
+# Auth (e.g., NextAuth)
+NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_SECRET=your-random-secret
+
+# External APIs
+YOUTUBE_API_KEY=your-youtube-api-key
+MAPS_API_KEY=your-places-api-key
+NEXT_PUBLIC_GOOGLE_MAPS_KEY=your-places-api-key # Used twice for different levels of visibility
+```
+
+These keys must **not** be committed; keep them in `.env.local` and configure them in your deployment platform (e.g., Vercel).
+
+---
+
+## 5. External Integrations
+
+### 5.1 YouTube API (Recipes)
+
+- Given a dish name, MealSlot queries the YouTube Data API for recipe videos.
+- Results are surfaced in a **“Cook at Home”** panel/modal with video thumbnails, titles, and links.
+
+### 5.2 Google Places API (Eat Out)
+
+- Given a dish name or cuisine, MealSlot looks up nearby restaurants using **Google Places**.
+- Used in the **“Eat Outside”** flow.
+
+---
+
+## 6. How to Contribute
+
+See `CONTRIBUTING.md` for:
+
+- Branching and PR workflow
+- Coding standards (ESLint + Prettier)
+- Commit message conventions
+- How to add new features without breaking existing flows
+
+---
+
+## 7. License
+
+See `LICENSE.md` for usage rules and licensing details.
+
+---
+
+## 8. Acknowledgements
+
+- CSC 510 staff and course materials
+- Prisma and Neon teams for tooling
+- YouTube and Google Places APIs for external data
+- Team G10 for design, implementation, and polish
