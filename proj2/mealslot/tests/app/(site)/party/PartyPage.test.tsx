@@ -23,15 +23,12 @@ vi.mock("@/app/context/UserContext", () => ({
   }),
 }));
 
-// PartyClient: expose a button that calls onSpin() so we can set spinOccurred
+// PartyClient: simple mock without onSpin callback
 vi.mock("@/components/PartyClient", () => ({
   __esModule: true,
-  default: ({ onSpin }: any) => (
+  default: () => (
     <div data-testid="party-client">
-      <button
-        data-testid="party-spin"
-        onClick={() => onSpin()}
-      >
+      <button data-testid="party-spin">
         Party Spin
       </button>
     </div>
@@ -337,11 +334,7 @@ describe("PartyPage", () => {
     // PartyClient visible
     await screen.findByTestId("party-client");
 
-    // Trigger onSpin to set spinOccurred = true
-    const partySpinBtn = screen.getByTestId("party-spin");
-    fireEvent.click(partySpinBtn);
-
-    // Eat Outside section appears
+    // Eat Outside section appears automatically when party is joined
     await screen.findByText("Eat Outside");
 
     // geolocation success path
@@ -413,9 +406,8 @@ describe("PartyPage", () => {
     fireEvent.click(joinButton);
 
     await screen.findByTestId("party-client");
-    fireEvent.click(screen.getByTestId("party-spin"));
 
-    // Eat Outside section visible
+    // Eat Outside section visible automatically
     await screen.findByText("Eat Outside");
 
     // geolocation present but calls error callback
@@ -485,8 +477,8 @@ describe("PartyPage", () => {
     fireEvent.click(joinButton);
 
     await screen.findByTestId("party-client");
-    fireEvent.click(screen.getByTestId("party-spin"));
 
+    // Eat Outside section visible automatically
     await screen.findByText("Eat Outside");
 
     // Remove geolocation from navigator → "geolocation" in navigator === false

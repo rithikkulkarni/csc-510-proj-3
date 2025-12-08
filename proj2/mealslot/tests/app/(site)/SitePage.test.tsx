@@ -599,6 +599,12 @@ describe("SiteHomePage", () => {
     };
     localStorage.setItem("userProfile", JSON.stringify(profile));
 
+    // Mock client.getUser() to return auth_id
+    (client.getUser as any).mockResolvedValue({
+      id: "auth-1",
+      displayName: "Auth User",
+    });
+
     // updateUserDetails resolves with new savedMeals
     (updateUserDetails as any).mockResolvedValueOnce({
       savedMeals: ["dish-save"],

@@ -34,6 +34,14 @@ export default function SavedMealsPage() {
   const [activeCategory, setActiveCategory] = useState<string>("all");
 
   /**
+   * When the component mounts or user changes, refresh the user context
+   * to ensure we have the current authenticated user's data only.
+   */
+  useEffect(() => {
+    refreshUser();
+  }, [refreshUser]);
+
+  /**
    * Load the full dish catalog once so we can resolve savedMeal IDs
    * into complete Dish objects.
    */

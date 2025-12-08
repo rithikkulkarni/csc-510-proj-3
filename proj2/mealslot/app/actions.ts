@@ -76,7 +76,9 @@ export async function updateUserDetails(
   userId: string,
   data: { name?: string; allergens?: string[]; savedMeals?: string[] }
 ) {
-  await prisma.user.update({
+  console.log("updateUserDetails: userId =", userId, "data =", JSON.stringify(data));
+  
+  const updated = await prisma.user.update({
     where: { auth_id: userId },
     data: {
       ...(data.name !== undefined && { name: data.name }),
@@ -84,6 +86,12 @@ export async function updateUserDetails(
       ...(data.savedMeals !== undefined && { savedMeals: data.savedMeals }),
     },
   });
+  
+  console.log("updateUserDetails: updated user =", JSON.stringify({
+    id: updated.id,
+    auth_id: updated.auth_id,
+    savedMeals: updated.savedMeals,
+  }));
 
   return getUserDetails(userId);
 }

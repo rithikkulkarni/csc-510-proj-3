@@ -65,12 +65,17 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const refreshUser = async () => {
     try {
       const neonUser = await client.getUser();
+      console.log("refreshUser: neonUser.id =", neonUser?.id);
+      
       if (!neonUser) {
+        console.log("refreshUser: no authenticated user, clearing profile");
         setUser(null);
         return;
       }
 
       const profile = await getUserDetails(neonUser.id);
+      console.log("refreshUser: profile.savedMeals =", profile?.savedMeals);
+      
       if (profile) {
         setUser({
           id: neonUser.id,
@@ -79,6 +84,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
           allergens: profile.allergens || [],
         });
       } else {
+        console.log("refreshUser: no profile found for user", neonUser.id);
         setUser(null);
       }
     } catch (err) {
