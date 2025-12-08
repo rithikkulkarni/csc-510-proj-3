@@ -142,7 +142,9 @@ function HomePage() {
   const handleSignOut = () => {
     localStorage.removeItem("guestUser");
     localStorage.removeItem("userProfile"); // clear Neon Auth profile
+    localStorage.removeItem("savedMeals"); // clear local saved meals cache so hearts reset
     setUser(null);
+    setSavedMeals([]);
   };
 
   /**

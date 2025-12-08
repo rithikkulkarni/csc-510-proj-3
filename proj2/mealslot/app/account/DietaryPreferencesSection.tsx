@@ -33,7 +33,8 @@ export default function DietaryPreferencesSection() {
       const all = await getAllAllergens();
       setAllergens(all);
 
-      const userAllergens = user?.allergens ?? [];
+      const userAllergens = (user?.allergens ?? [])
+        .filter((a) => !a.includes("object")); // Filter out corrupted "object" entries
       const validPrefs = all.filter((a) => userAllergens.includes(a));
       setPreferences(validPrefs);
     }
