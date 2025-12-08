@@ -60,7 +60,7 @@ but nevertheless, here is a track record that everyone is contributing a lot)|ev
 <!-- Optional logo if you have one -->
 <!-- <img src="./public/mealslot-logo.png" alt="MealSlot Logo" width="70" height="70"> -->
 
-[📺 **WATCH THE DEMO VIDEO!**](./MealSlotDemo.mp4)
+[📺 **WATCH THE DEMO VIDEO!**](./MealSlot_Demo.mp4)
 
 ## Group Members (G10)
 
