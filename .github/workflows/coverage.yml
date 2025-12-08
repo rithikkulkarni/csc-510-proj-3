@@ -42,3 +42,9 @@ jobs:
         with:
           files: proj2/mealslot/coverage/lcov.info
           fail_ci_if_error: true
+
+env:
+  DATABASE_URL: ${{ secrets.DATABASE_URL }}
+  YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+  MAPS_API_KEY: ${{ secrets.MAPS_API_KEY }}
+  NEXT_PUBLIC_GOOGLE_MAPS_KEY: ${{ secrets.NEXT_PUBLIC_GOOGLE_MAPS_KEY }}

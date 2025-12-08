@@ -142,7 +142,9 @@ function HomePage() {
   const handleSignOut = () => {
     localStorage.removeItem("guestUser");
     localStorage.removeItem("userProfile"); // clear Neon Auth profile
+    localStorage.removeItem("savedMeals"); // clear local saved meals cache so hearts reset
     setUser(null);
+    setSavedMeals([]);
   };
 
   /**
@@ -175,10 +177,13 @@ function HomePage() {
     }
 
     // Persist to DB for authenticated users
-    const authId = (user as any)?.auth_id || (user as any)?.id;
-    if (authId) {
-      try {
-        const updated = await updateUserDetails(authId, { savedMeals: next });
+    // Get the actual authenticated user ID from Stack, not cached profile
+    try {
+      const stackUser = await client.getUser();
+      console.log("toggleSavedMeal: stackUser.id =", stackUser?.id);
+      if (stackUser?.id) {
+        const updated = await updateUserDetails(stackUser.id, { savedMeals: next });
+        console.log("toggleSavedMeal: updated.savedMeals =", updated?.savedMeals);
         if (updated?.savedMeals) {
           setSavedMeals(updated.savedMeals);
           setUser((prev) =>
@@ -192,9 +197,11 @@ function HomePage() {
             })
           );
         }
-      } catch (err) {
-        console.error("Failed to persist saved meals", err);
+      } else {
+        console.warn("toggleSavedMeal: no authenticated user found");
       }
+    } catch (err) {
+      console.error("Failed to persist saved meals", err);
     }
   };
 
