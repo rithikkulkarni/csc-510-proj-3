@@ -1,6 +1,6 @@
 # PROJECT 3 README: GROUP 10 EXTENDING MEALSLOT
-
 [![Coverage Status](https://coveralls.io/repos/github/rithikkulkarni/csc-510-proj-3/badge.svg?branch=main)](https://coveralls.io/github/rithikkulkarni/csc-510-proj-3?branch=main)
+[![Lint](https://github.com/rithikkulkarni/csc-510-proj-3/actions/workflows/lint.yml/badge.svg?branch=main)](https://github.com/rithikkulkarni/csc-510-proj-3/actions/workflows/lint.yml)
 [![GitHub issues](https://img.shields.io/github/issues/rithikkulkarni/csc-510-proj-3)](https://github.com/rithikkulkarni/csc-510-proj-3/issues)
 [![Open Pull Requests](https://img.shields.io/github/issues-pr/rithikkulkarni/csc-510-proj-3)](https://github.com/rithikkulkarni/csc-510-proj-3/pulls)
 [![Contributors](https://img.shields.io/github/contributors/rithikkulkarni/csc-510-proj-3)](https://github.com/rithikkulkarni/csc-510-proj-3/graphs/contributors)
@@ -18,13 +18,13 @@ Rubric Self-Evaluation:
 |Workload is spread over the whole team (one team member is often Xtimes more productive than the others... --| |3|
 but nevertheless, here is a track record that everyone is contributing a lot)|evidence in GH|3|
 |Number of commits|in GH|3|
-|Number of commits: by different people|in GH|2|
+|Number of commits: by different people|in GH|3|
 |Issues reports: there are **many**| |3|
 |Issues are being closed|evidence in GH|3|
 |Docs: doco generated, format not ugly |in GH|3|
 |Docs: what: point descriptions of each class/function (in isolation)| |3|
 |Docs: how: for common use cases X,Y,Z mini-tutorials showing worked examples on how to do X,Y,Z|wiki pages for this in GH: https://github.com/rithikkulkarni/csc-510-proj-2/wiki|3|
-|Docs: why: docs tell a story, motivate the whole thing, deliver a punchline that makes you want to rush out and use the thing| |2|
+|Docs: why: docs tell a story, motivate the whole thing, deliver a punchline that makes you want to rush out and use the thing| |3|
 |Docs: short video, animated, hosted on your repo. That convinces people why they want to work on your code.| |3|
 |Use of version control tools| |3|
 |Test cases exist|dozens of tests and those test cases are more than 30% of the code base|3|
@@ -429,8 +429,6 @@ These keys must **not** be committed; keep them in `.env.local` and configure th
 
 - Given a dish name or cuisine, MealSlot looks up nearby restaurants using **Google Places**.
 - Used in the **“Eat Outside”** flow.
-
----
 
 ---
 
